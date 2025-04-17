@@ -1,0 +1,34 @@
+# General
+.DS_Store
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend (Vite)
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/coverage/
+frontend/.DS_Store
+frontend/node_modules/
+
+# Backend (Python)
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/.env
+backend/.venv/
+backend/venv/
+backend/env/
+backend/ENV/
+backend/env.bak/
+backend/venv.bak/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/instance/
+
+# IDE/Editor specific
+.idea/
+.vscode/ 
