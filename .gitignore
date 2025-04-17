@@ -31,4 +31,5 @@ backend/instance/
 
 # IDE/Editor specific
 .idea/
-.vscode/ 
+.vscode/
+!.vscode/settings.json # Allow specific workspace settings 
