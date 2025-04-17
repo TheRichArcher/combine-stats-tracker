@@ -11,12 +11,14 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Body, Query
-from sqlmodel import Field, SQLModel, create_engine, Session, select, AsyncSession
+from sqlmodel import Field, SQLModel, create_engine, Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel.ext.asyncio.session import AsyncSession
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import logging
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -55,6 +57,23 @@ async def lifespan(app: FastAPI):
 
 # --- FastAPI App Initialization ---
 app = FastAPI(lifespan=lifespan)
+
+# --- CORS Configuration ---
+# IMPORTANT: Update origins with your deployed frontend URL
+# You can use "*" for development, but be specific in production
+origins = [
+    "http://localhost:5173", # Allow frontend dev server
+    # "https://your-frontend-name.onrender.com", # Add your Render frontend URL here!
+    # "*" # Use cautiously for testing
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Allows all methods
+    allow_headers=["*"], # Allows all headers
+)
 
 # --- Enums ---
 class DrillType(str, Enum):

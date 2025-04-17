@@ -10,6 +10,9 @@ const DRILL_TYPES = {
   AGILITY: "agility",
 };
 
+// Add this line at the top, outside the App function
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 function App() {
   // --- Player Form State ---
   const [name, setName] = useState('');
@@ -126,7 +129,8 @@ function App() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/players/', {
+      // Use API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/players/`, {
         method: 'POST',
         body: formData,
       });
@@ -174,7 +178,8 @@ function App() {
     };
 
     try {
-        const response = await fetch('http://localhost:8000/drill-results/', {
+        // Use API_BASE_URL
+        const response = await fetch(`${API_BASE_URL}/drill-results/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -209,7 +214,8 @@ function App() {
     setPlayersLoading(true);
     setPlayersError('');
     try {
-      const response = await fetch('http://localhost:8000/players/');
+      // Use API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/players/`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -229,7 +235,8 @@ function App() {
     setResultsError('');
     setSelectedPlayerResults([]); // Clear previous results
     try {
-      const response = await fetch(`http://localhost:8000/players/${pId}/results/`);
+      // Use API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/players/${pId}/results/`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -254,7 +261,8 @@ function App() {
     setRankingsError('');
     setRankings([]); // Clear previous rankings
     try {
-        const response = await fetch(`http://localhost:8000/rankings/?age_group=${encodeURIComponent(ageGroup)}`);
+        // Use API_BASE_URL
+        const response = await fetch(`${API_BASE_URL}/rankings/?age_group=${encodeURIComponent(ageGroup)}`);
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -275,8 +283,8 @@ function App() {
         alert("Please select an age group to export.");
         return;
     }
-    // Construct the export URL
-    const exportUrl = `http://localhost:8000/rankings/export?format=${exportFormat}&age_group=${encodeURIComponent(selectedAgeGroup)}`;
+    // Use API_BASE_URL
+    const exportUrl = `${API_BASE_URL}/rankings/export?format=${exportFormat}&age_group=${encodeURIComponent(selectedAgeGroup)}`;
     
     // Trigger download by navigating to the URL
     window.location.href = exportUrl;
