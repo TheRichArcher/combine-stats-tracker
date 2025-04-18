@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css'; // Basic styling
 
+// --- Define Custom Error Class ---
+class HttpError extends Error {
+  constructor(status, detail, message) {
+    super(message || `HTTP error! status: ${status}`);
+    this.status = status;
+    this.detail = detail || "Unknown server error.";
+    this.name = "HttpError";
+  }
+}
+
 // Consistent with backend Enum
 const DRILL_TYPES = {
   FORTY_M_DASH: "40m_dash",
@@ -177,7 +187,7 @@ function App() {
     setDrillMessage('');
 
     if (!playerId || !drillType || rawScore === '') {
-        setDrillMessage('Please fill in Player ID, Drill Type, and Raw Score.');
+        setDrillMessage('Please fill in Player Number, Drill Type, and Raw Score.');
         setIsSubmittingDrill(false);
         return;
     }
@@ -199,8 +209,15 @@ function App() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            let errorDetail = `HTTP error! status: ${response.status}`;
+            try {
+                // Try to get detail from backend JSON response
+                const errorData = await response.json();
+                errorDetail = errorData.detail || errorDetail;
+            } catch (jsonError) {
+                // Ignore if response body isn't valid JSON, use status code message
+            }
+            throw new HttpError(response.status, errorDetail); // Throw custom error
         }
 
         const result = await response.json();
@@ -214,18 +231,13 @@ function App() {
         fetchRankings(selectedAgeGroup);
 
     } catch (error) {
-      console.error("Error submitting drill result:", error);
-    
-      if (error instanceof Response) {
-        try {
-          const errorData = await error.json();
-          setDrillMessage(`Error: ${errorData.detail || "Unknown error from server."}`);
-        } catch (jsonError) {
-          setDrillMessage("Error: Failed to parse error response from server.");
+        console.error('Error submitting drill result:', error);
+        // Check if it's our custom HttpError, otherwise use default message
+        if (error instanceof HttpError) {
+            setDrillMessage(`Error: ${error.detail}`);
+        } else {
+            setDrillMessage(`Error: ${error.message || error.toString()}`);
         }
-      } else {
-        setDrillMessage(`Error: ${error.message || error.toString()}`);
-      }
     } finally {
         setIsSubmittingDrill(false);
     }
@@ -434,7 +446,7 @@ function App() {
         <h1>Enter Drill Result</h1>
         <form onSubmit={handleDrillSubmit}>
             <div>
-                <label htmlFor="playerId">Player ID:</label>
+                <label htmlFor="playerId">Player Number:</label>
                 <input
                     type="number"
                     id="playerId"
