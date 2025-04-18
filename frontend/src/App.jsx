@@ -315,7 +315,7 @@ function App() {
 
   // --- Render --- 
   return (
-    <div className="App">
+    <div className="App container">
       <img src="/combine-logo.png" alt="Combine Stats Tracker Logo" className="logo" />
 
       {/* Player Creation Form */}
