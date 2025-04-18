@@ -94,6 +94,29 @@ th {
   margin: 0 auto 20px;
 }
 
+/* Radio Button Alignment */
+.export-controls label {
+  display: flex; /* Use flex for alignment */
+  align-items: center; /* Vertically center items */
+  margin-right: 1rem; /* Space between radio options */
+  cursor: pointer; /* Make label clickable */
+}
+
+.export-controls input[type="radio"] {
+  width: auto; /* Don't force radio button to full width */
+  margin-right: 0.4rem; /* Space between radio and text */
+  margin-bottom: 0; /* Override default bottom margin */
+  flex-shrink: 0; /* Prevent radio from shrinking */
+}
+
+/* Optional: Container for radio buttons if needed */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  align-items: center;
+  margin-bottom: 1rem; /* Space below the group */
+}
+
 @media (max-width: 480px) {
   .container {
     padding: 12px;

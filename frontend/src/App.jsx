@@ -591,25 +591,26 @@ function App() {
         {/* Export Controls */} 
         {selectedAgeGroup && (
             <div className="export-controls" style={{ marginTop: '1em' }}>
-                <label style={{ marginRight: '1em' }}>Export Format:</label>
-                <label style={{ marginRight: '1em' }}>
-                    <input 
-                        type="radio" 
-                        name="exportFormat" 
-                        value="csv"
-                        checked={exportFormat === 'csv'}
-                        onChange={() => setExportFormat('csv')}
-                    /> CSV
-                </label>
-                <label style={{ marginRight: '1em' }}>
-                    <input 
-                        type="radio" 
-                        name="exportFormat" 
-                        value="pdf"
-                        checked={exportFormat === 'pdf'}
-                        onChange={() => setExportFormat('pdf')}
-                    /> PDF
-                </label>
+                <div className="radio-group">
+                  <label>
+                      <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          value="csv"
+                          checked={exportFormat === 'csv'}
+                          onChange={() => setExportFormat('csv')}
+                      /> CSV
+                  </label>
+                  <label>
+                      <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          value="pdf"
+                          checked={exportFormat === 'pdf'}
+                          onChange={() => setExportFormat('pdf')}
+                      /> PDF
+                  </label>
+                </div>
                 <button onClick={handleExport}>Export Report</button>
             </div>
         )}

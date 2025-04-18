@@ -549,17 +549,16 @@ async def export_rankings(
 
         for player_data in ranked_player_export_data:
             row = [
-                player_data["Rank"],
-                player_data["Name"],
-                player_data["Number"],
-                player_data["AgeGroup"],
-                f"{player_data['CompositeScore']:.2f}",
+                str(player_data["Rank"]),
+                str(player_data["Name"]),
+                str(player_data["Number"]),
+                str(player_data["AgeGroup"]), # Already a string, but explicit is safe
+                f"{player_data['CompositeScore']:.2f}", # Already a string
             ]
-            # Add drill scores
+            # Add drill scores (already formatted as strings or 'N/A')
             for drill_type_enum in DrillType:
-                 row.append(player_data[drill_type_enum.value]) # Already formatted
-            # Add Photo URL
-            # TODO: Fetch and embed actual image if URL is valid and accessible
+                 row.append(player_data[drill_type_enum.value])
+            # Add Photo URL (already formatted as string or 'N/A')
             row.append(player_data["PhotoURL"])
             table_data.append(row)
 
@@ -567,16 +566,20 @@ async def export_rankings(
              story.append(Paragraph("No players found for this age group.", styles['Normal']))
         else:
             # Create and style table
-            table = Table(table_data, colWidths=([0.5*inch] + [1.5*inch]*1 + [0.5*inch]*2 + [1.0*inch]*1 + [0.8*inch]*len(DrillType) + [1.5*inch]*1 )) # Adjust widths as needed
+            table = Table(table_data, colWidths=([0.5*inch] + [1.5*inch]*1 + [0.5*inch]*1 + [0.8*inch]*1 + [1.0*inch]*1 + [0.8*inch]*len(DrillType) + [1.5*inch]*1 )) # Adjusted AgeGroup width
+            # Updated TableStyle
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'), # Center align all
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                # ('BOTTOMPADDING', (0, 0), (-1, 0), 12), # Use default or smaller padding
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTSIZE', (0,0), (-1,-1), 8), # Smaller font for more columns
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey), # Thinner grid lines
+                ('FONTSIZE', (0,0), (-1,0), 10), # Header font size
+                ('FONTSIZE', (0,1), (-1,-1), 9),  # Body font size
+                ('BOTTOMPADDING', (0,0), (-1,-1), 4), # Reduce padding
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), # Vertical alignment
             ]))
             story.append(table)
 
