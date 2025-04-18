@@ -183,7 +183,7 @@ function App() {
     }
 
     const drillData = {
-        player_id: parseInt(playerId, 10),
+        player_number: parseInt(playerId, 10),
         drill_type: drillType,
         raw_score: parseFloat(rawScore)
     };
