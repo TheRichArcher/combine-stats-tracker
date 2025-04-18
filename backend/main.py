@@ -21,6 +21,9 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import NoResultFound # Import for potential future use
 from sqlalchemy import Enum as SqlEnum # Import sqlalchemy Enum
+from sqlalchemy import Date # Import Date type for birthdate
+import csv # Added for CSV parsing
+import asyncio # Added for dummy sleep
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -222,6 +225,7 @@ class PlayerBase(SQLModel):
     name: str
     # Use AgeGroupEnum with sa_column for database mapping, disable native enum
     age_group: AgeGroupEnum = Field(sa_column=Column(SqlEnum(AgeGroupEnum, native_enum=False)))
+    birthdate: Optional[datetime.date] = Field(default=None, sa_column=Column(Date)) # Added birthdate field
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -231,11 +235,13 @@ class Player(PlayerBase, table=True):
 class PlayerCreate(SQLModel):
     name: str
     age_group: AgeGroupEnum # Use Enum for request validation too
+    birthdate: Optional[datetime.date] = None # Added birthdate field
 
 class PlayerRead(PlayerBase): # Inherits name, age_group (which is now Enum)
     id: int
     number: Optional[int]
     photo_url: Optional[str]
+    birthdate: Optional[datetime.date] # Added birthdate field
 
 # Updated DrillResult Models
 class DrillResultBase(SQLModel):
@@ -601,6 +607,130 @@ async def export_rankings(
 @app.get("/")
 async def read_root():
     return {"message": "Combine Stats Tracker Backend"}
+
+# --- NEW CSV Upload Endpoint ---
+@app.post("/players/upload_csv")
+async def upload_players_csv(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Uploads a CSV file to bulk-create player profiles.
+    Extracts 'Player First Name', 'Player Last Name', 'Player Birth Date', 'Division Name'.
+    Validates required fields and 'Division Name' against allowed AgeGroupEnum values.
+    Skips rows with invalid data.
+    Returns a summary of the import process.
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV file.")
+
+    content = await file.read()
+    # Decode content and wrap in a StringIO object for csv.reader
+    content_str = content.decode('utf-8')
+    csvfile = io.StringIO(content_str)
+
+    processed_rows = 0
+    imported_count = 0
+    skipped_rows = [] # List to store details of skipped rows (e.g., row number, reason, data)
+
+    # Define allowed age groups for validation (case-insensitive mapping)
+    allowed_age_groups = {ag.value.upper(): ag for ag in AgeGroupEnum}
+
+    try:
+        reader = csv.DictReader(csvfile)
+        headers = reader.fieldnames
+        print(f"CSV Headers: {headers}")
+
+        # --- Header Validation (optional but recommended) ---
+        required_headers = ["Player First Name", "Player Last Name", "Division Name"]
+        optional_headers = ["Player Birth Date"]
+        if not all(h in headers for h in required_headers):
+             missing = [h for h in required_headers if h not in headers]
+             raise HTTPException(status_code=400, detail=f"Missing required CSV headers: {', '.join(missing)}")
+        # --- End Header Validation ---
+
+        for i, row in enumerate(reader):
+            row_num = i + 2 # Adding 2 for 1-based index + header row
+            processed_rows += 1
+            player_first_name = row.get("Player First Name", "").strip()
+            player_last_name = row.get("Player Last Name", "").strip()
+            division_name = row.get("Division Name", "").strip()
+            birth_date_str = row.get("Player Birth Date", "").strip()
+
+            # --- Data Validation ---
+            if not player_first_name or not player_last_name:
+                skipped_rows.append({"row": row_num, "reason": "Missing required field (First or Last Name)", "data": row})
+                continue
+
+            if not division_name:
+                skipped_rows.append({"row": row_num, "reason": "Missing Division Name", "data": row})
+                continue
+
+            # Validate and map age group (case-insensitive)
+            age_group_enum = allowed_age_groups.get(division_name.upper())
+            if not age_group_enum:
+                skipped_rows.append({"row": row_num, "reason": f"Invalid or unsupported Division Name: '{division_name}'", "data": row})
+                continue
+
+            # Parse birthdate if present
+            birth_date_obj = None
+            if birth_date_str:
+                try:
+                    # Assuming MM/DD/YYYY format based on example
+                    birth_date_obj = datetime.datetime.strptime(birth_date_str, "%m/%d/%Y").date()
+                except ValueError:
+                    skipped_rows.append({"row": row_num, "reason": f"Invalid Birth Date format: '{birth_date_str}' (expected MM/DD/YYYY)", "data": row})
+                    continue
+            # --- End Data Validation ---
+
+            try:
+                # Generate player number
+                new_number = await generate_player_number(age_group_enum, session)
+
+                # Create Player instance
+                player_name = f"{player_first_name} {player_last_name}"
+                player_data = PlayerCreate(name=player_name, age_group=age_group_enum, birthdate=birth_date_obj)
+                db_player = Player.model_validate(player_data)
+                db_player.number = new_number
+                db_player.photo_url = None # No photo upload via CSV
+
+                # Add to session (commit later for efficiency)
+                session.add(db_player)
+                imported_count += 1
+
+            except HTTPException as e:
+                # Catch known errors like no available numbers
+                skipped_rows.append({"row": row_num, "reason": f"Failed to create player: {e.detail}", "data": row})
+                await session.rollback() # Rollback potential partial changes for this row
+                continue # Continue to next row
+            except Exception as e:
+                # Catch unexpected errors during player creation/number generation
+                logging.error(f"Error processing row {row_num}: {e}")
+                skipped_rows.append({"row": row_num, "reason": f"Internal server error during processing: {e}", "data": row})
+                await session.rollback()
+                continue # Continue to next row
+
+        # Commit all successfully processed players at once
+        if imported_count > 0:
+            await session.commit()
+            # Note: Refreshing individual players after bulk commit is complex/inefficient.
+            # The response confirms import count, frontend can refresh list if needed.
+
+        return {
+            "message": "CSV processing complete.",
+            "processed_rows": processed_rows,
+            "imported_count": imported_count,
+            "skipped_count": len(skipped_rows),
+            "skipped_details": skipped_rows # Optionally return details
+        }
+
+    except Exception as e:
+        logging.error(f"Error processing CSV file {file.filename}: {e}")
+        await session.rollback() # Ensure rollback if error happens during reading/initial processing
+        raise HTTPException(status_code=500, detail=f"Failed to process CSV file: {e}")
+
+    finally:
+        await file.close()
 
 # --- Uvicorn Runner (for local development) ---
 if __name__ == "__main__":

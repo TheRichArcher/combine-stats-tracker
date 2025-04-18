@@ -36,6 +36,12 @@ function App() {
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
 
+  // --- CSV Upload State ---
+  const [csvFile, setCsvFile] = useState(null);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
+  const [uploadSummary, setUploadSummary] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+
   // --- Drill Result Form State ---
   const [playerId, setPlayerId] = useState('');
   const [drillType, setDrillType] = useState(DRILL_TYPES.FORTY_M_DASH); // Default drill
@@ -164,6 +170,64 @@ function App() {
       setPlayerMessage(`Error creating player: ${error.message}`);
     } finally {
       setIsSubmittingPlayer(false);
+    }
+  };
+
+  // --- CSV Upload Handler ---
+  const handleCsvFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      setCsvFile(file);
+      setUploadError(''); // Clear previous error on new file selection
+      setUploadSummary(null); // Clear previous summary
+    } else {
+      setCsvFile(null);
+      setUploadError('Please select a valid .csv file.');
+      setUploadSummary(null);
+    }
+  };
+
+  const handleCsvUpload = async (event) => {
+    event.preventDefault();
+    if (!csvFile) {
+      setUploadError('Please select a CSV file to upload.');
+      return;
+    }
+
+    setIsUploadingCsv(true);
+    setUploadError('');
+    setUploadSummary(null);
+
+    const formData = new FormData();
+    formData.append('file', csvFile);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/players/upload_csv`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json(); // Try to parse JSON regardless of status
+
+      if (!response.ok) {
+        throw new HttpError(response.status, result.detail || 'Failed to upload CSV.');
+      }
+
+      setUploadSummary(result); // Store the summary from backend
+      setCsvFile(null); // Clear file input after successful upload
+      // Optionally reset the file input visually if needed
+      // document.getElementById('csvFileInput').value = null;
+      fetchPlayers(); // Refresh the player list
+
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      if (error instanceof HttpError) {
+          setUploadError(`Error: ${error.detail} (Status: ${error.status})`);
+      } else {
+          setUploadError(`Error uploading CSV: ${error.message || 'Unknown error'}`);
+      }
+    } finally {
+      setIsUploadingCsv(false);
     }
   };
 
@@ -428,6 +492,49 @@ function App() {
         </form>
         {playerMessage && <p className="message">{playerMessage}</p>}
       </div>
+
+      {/* --- CSV Upload Section --- */}
+      <div className="form-section">
+        <h1>Upload Players via CSV</h1>
+        <form onSubmit={handleCsvUpload}>
+          <div>
+            <label htmlFor="csvFileInput">Select CSV File:</label>
+            <input
+              type="file"
+              id="csvFileInput"
+              accept=".csv"
+              onChange={handleCsvFileChange}
+              // required // Make required or check csvFile state before submit
+            />
+          </div>
+          <button type="submit" disabled={isUploadingCsv || !csvFile}>
+            {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+          </button>
+        </form>
+        {uploadError && <p className="message error">{uploadError}</p>}
+        {uploadSummary && (
+          <div className="message summary">
+            <h3>Upload Summary</h3>
+            <p>Processed Rows: {uploadSummary.processed_rows}</p>
+            <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
+            <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
+            {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
+              <div>
+                <h4>Skipped Row Details:</h4>
+                <ul>
+                  {uploadSummary.skipped_details.map((skip, index) => (
+                    <li key={index}>Row {skip.row}: {skip.reason}</li>
+                    // Optionally display skip.data if needed for debugging
+                    // <pre>{JSON.stringify(skip.data)}</pre>
+                  ))}
+                </ul>
+                 {/* TODO: Add download skipped rows functionality here */}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {/* --- End CSV Upload Section --- */}
 
       <hr />
 
