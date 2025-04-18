@@ -62,18 +62,15 @@ app = FastAPI(lifespan=lifespan)
 # IMPORTANT: Update origins with your deployed frontend URL
 # You can use "*" for development, but be specific in production
 origins = [
-    "http://localhost:5173", # Allow frontend dev server
-    "https://combine-stats-tracker-frontend.onrender.com", # Allow deployed frontend
-    # "https://your-frontend-name.onrender.com", # Add your Render frontend URL here!
-    # "*" # Use cautiously for testing
+    "https://combine-stats-tracker-frontend.onrender.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins,  # Explicit frontend URL
     allow_credentials=True,
-    allow_methods=["*"], # Allows all methods
-    allow_headers=["*"], # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Enums ---
