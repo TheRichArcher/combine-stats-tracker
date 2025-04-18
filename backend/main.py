@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 import logging
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import NoResultFound # Import for potential future use
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -135,6 +136,38 @@ def calculate_normalized_score(drill_type: DrillType, raw_score: float) -> float
     return round(normalized_score, 2)
 
 # --- Helper Functions ---
+
+# Map age groups to number ranges
+AGE_GROUP_RANGES = {
+    "6U": (600, 699),
+    "8U": (800, 899),
+    "10U": (1000, 1099),
+    "12U": (1200, 1299),
+    "14U": (1400, 1499),
+}
+
+async def generate_player_number(age_group: str, session: AsyncSession) -> int:
+    """Generates the next available player number for the given age group."""
+    if age_group not in AGE_GROUP_RANGES:
+        raise HTTPException(status_code=400, detail=f"Invalid age group specified: {age_group}")
+
+    start, end = AGE_GROUP_RANGES[age_group]
+
+    # Find existing numbers in the range
+    result = await session.execute(
+        select(Player.number)
+        .where(Player.number >= start, Player.number <= end)
+    )
+    used_numbers = set(result.scalars().all())
+
+    # Find the lowest available number
+    for num in range(start, end + 1):
+        if num not in used_numbers:
+            return num
+
+    # If no number is found
+    raise HTTPException(status_code=409, detail=f"No available player numbers left in age group {age_group}")
+
 async def calculate_composite_score(
     player_id: int,
     session: AsyncSession,
@@ -176,19 +209,23 @@ async def calculate_composite_score(
 # --- Models ---
 class PlayerBase(SQLModel):
     name: str
-    number: int
-    age: int
+    # number: int # Number is now auto-generated
+    age_group: str # Changed from age
     # photo_url will be handled separately for now
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    number: Optional[int] = Field(default=None, unique=True) # Add number field here, make it unique
     photo_url: Optional[str] = Field(default=None) # Store URL or path later
 
-class PlayerCreate(PlayerBase):
-    pass # Use PlayerBase fields
+class PlayerCreate(SQLModel): # No longer inherits PlayerBase directly
+    name: str
+    age_group: str
+    # Number and age are removed as they are generated/derived
 
-class PlayerRead(PlayerBase):
+class PlayerRead(PlayerBase): # Inherits name, age_group
     id: int
+    number: Optional[int] # Include number in read model
     photo_url: Optional[str]
 
 # Updated DrillResult Models
@@ -231,36 +268,54 @@ class PlayerRankingRead(PlayerSummaryRead):
 @app.post("/players/", response_model=PlayerRead)
 async def create_player(
     name: str = Form(...),
-    number: int = Form(...),
-    age: int = Form(...),
-    photo: Optional[UploadFile] = File(None), # Accept photo but don't process/store yet
+    age_group: str = Form(...), # Changed from age, removed number
+    photo: Optional[UploadFile] = File(None),
     session: AsyncSession = Depends(get_session)
 ):
-    print(f"Received player data: Name={name}, Number={number}, Age={age}")
+    print(f"Received player data: Name={name}, Age Group={age_group}")
+
+    # Generate the next available player number
+    try:
+        new_number = await generate_player_number(age_group, session)
+        print(f"Generated player number: {new_number}")
+    except HTTPException as e:
+        # Propagate HTTPException (e.g., 400 invalid group, 409 no numbers left)
+        raise e
+    except Exception as e:
+        # Catch unexpected errors during number generation
+        print(f"Unexpected error generating number: {e}")
+        raise HTTPException(status_code=500, detail="Error generating player number")
+
     if photo:
         print(f"Received photo: {photo.filename}, Content-Type: {photo.content_type}")
-        # TODO: Implement actual photo saving logic (e.g., to cloud storage)
-        # For now, we just acknowledge receipt and save a placeholder or None
-        photo_url_placeholder = f"uploads/{photo.filename}" # Example placeholder
+        # TODO: Implement actual photo saving logic
+        photo_url_placeholder = f"uploads/{photo.filename}"
     else:
         print("No photo received.")
         photo_url_placeholder = None
 
-    # Create Player instance without the photo file itself
-    player_data = PlayerCreate(name=name, number=number, age=age)
+    # Create Player instance
+    player_data = PlayerCreate(name=name, age_group=age_group)
+    # Use the full Player model for DB creation, setting generated/derived fields
     db_player = Player.model_validate(player_data)
-    db_player.photo_url = photo_url_placeholder # Assign placeholder URL
+    db_player.number = new_number
+    db_player.photo_url = photo_url_placeholder
 
     try:
         session.add(db_player)
         await session.commit()
         await session.refresh(db_player)
         print(f"Player created successfully: {db_player}")
+        # Return the full player data including the generated number
         return db_player
     except Exception as e:
         await session.rollback()
-        print(f"Error creating player: {e}")
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+        # Check for unique constraint violation (likely number collision if generation logic had race condition)
+        if "unique constraint" in str(e).lower():
+             print(f"Error: Potential number collision for number {new_number}. Error: {e}")
+             raise HTTPException(status_code=409, detail=f"Failed to assign unique player number. Please try again.")
+        print(f"Error creating player in DB: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error during player creation: {e}")
 
 # Updated Drill Result Endpoint
 @app.post("/drill-results/", response_model=DrillResultRead)
