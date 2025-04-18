@@ -225,7 +225,6 @@ class PlayerBase(SQLModel):
     name: str
     # Use AgeGroupEnum with sa_column for database mapping, disable native enum
     age_group: AgeGroupEnum = Field(sa_column=Column(SqlEnum(AgeGroupEnum, native_enum=False)))
-    birthdate: Optional[datetime.date] = Field(default=None, sa_column=Column(Date)) # Added birthdate field
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -235,13 +234,11 @@ class Player(PlayerBase, table=True):
 class PlayerCreate(SQLModel):
     name: str
     age_group: AgeGroupEnum # Use Enum for request validation too
-    birthdate: Optional[datetime.date] = None # Added birthdate field
 
 class PlayerRead(PlayerBase): # Inherits name, age_group (which is now Enum)
     id: int
     number: Optional[int]
     photo_url: Optional[str]
-    birthdate: Optional[datetime.date] # Added birthdate field
 
 # Updated DrillResult Models
 class DrillResultBase(SQLModel):
@@ -643,7 +640,6 @@ async def upload_players_csv(
 
         # --- Header Validation (optional but recommended) ---
         required_headers = ["Player First Name", "Player Last Name", "Division Name"]
-        optional_headers = ["Player Birth Date"]
         if not all(h in headers for h in required_headers):
              missing = [h for h in required_headers if h not in headers]
              raise HTTPException(status_code=400, detail=f"Missing required CSV headers: {', '.join(missing)}")
@@ -655,7 +651,6 @@ async def upload_players_csv(
             player_first_name = row.get("Player First Name", "").strip()
             player_last_name = row.get("Player Last Name", "").strip()
             division_name = row.get("Division Name", "").strip()
-            birth_date_str = row.get("Player Birth Date", "").strip()
 
             # --- Data Validation ---
             if not player_first_name or not player_last_name:
@@ -672,15 +667,6 @@ async def upload_players_csv(
                 skipped_rows.append({"row": row_num, "reason": f"Invalid or unsupported Division Name: '{division_name}'", "data": row})
                 continue
 
-            # Parse birthdate if present
-            birth_date_obj = None
-            if birth_date_str:
-                try:
-                    # Assuming MM/DD/YYYY format based on example
-                    birth_date_obj = datetime.datetime.strptime(birth_date_str, "%m/%d/%Y").date()
-                except ValueError:
-                    skipped_rows.append({"row": row_num, "reason": f"Invalid Birth Date format: '{birth_date_str}' (expected MM/DD/YYYY)", "data": row})
-                    continue
             # --- End Data Validation ---
 
             try:
@@ -689,7 +675,7 @@ async def upload_players_csv(
 
                 # Create Player instance
                 player_name = f"{player_first_name} {player_last_name}"
-                player_data = PlayerCreate(name=player_name, age_group=age_group_enum, birthdate=birth_date_obj)
+                player_data = PlayerCreate(name=player_name, age_group=age_group_enum)
                 db_player = Player.model_validate(player_data)
                 db_player.number = new_number
                 db_player.photo_url = None # No photo upload via CSV
