@@ -40,6 +40,7 @@ function App() {
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [uploadSummary, setUploadSummary] = useState(null);
   const [uploadError, setUploadError] = useState('');
+  const [isCsvSectionVisible, setIsCsvSectionVisible] = useState(false); // State for visibility
 
   // --- Drill Result Form State ---
   const [playerId, setPlayerId] = useState('');
@@ -491,55 +492,13 @@ function App() {
             <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
                Generated After Creation
             </em>
+            <p className="message" style={{ marginTop: '5px' }}>{playerMessage}</p>
           </div>
         )}
-        {playerMessage && <p className="message">{playerMessage}</p>}
-      </div>
-
-      {/* --- CSV Upload Section --- */}
-      <div className="form-section">
-        <h1>Upload Players via CSV</h1>
-        <form onSubmit={handleCsvUpload}>
-          <div>
-            <label htmlFor="csvFileInput">Select CSV File:</label>
-            <input
-              type="file"
-              id="csvFileInput"
-              accept=".csv"
-              onChange={handleCsvFileChange}
-              // required // Make required or check csvFile state before submit
-            />
-          </div>
-          <button type="submit" disabled={isUploadingCsv || !csvFile}>
-            {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
-          </button>
-        </form>
-        {uploadError && <p className="message error">{uploadError}</p>}
-        {uploadSummary && (
-          <div className="message summary">
-            <h3>Upload Summary</h3>
-            <p>Processed Rows: {uploadSummary.processed_rows}</p>
-            <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
-            <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
-            {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
-              <div>
-                <h4>Skipped Row Details:</h4>
-                <ul>
-                  {uploadSummary.skipped_details.map((skip, index) => (
-                    <li key={index}>Row {skip.row}: {skip.reason}</li>
-                    // Optionally display skip.data if needed for debugging
-                    // <pre>{JSON.stringify(skip.data)}</pre>
-                  ))}
-                </ul>
-                 {/* TODO: Add download skipped rows functionality here */}
-              </div>
-            )}
-          </div>
+        {playerMessage && !playerMessage.includes('successfully!') && (
+           <p className="message error">{playerMessage}</p>
         )}
       </div>
-      {/* --- End CSV Upload Section --- */}
-
-      <hr />
 
       {/* Drill Result Entry Form */}
       <div className="form-section">
@@ -585,6 +544,59 @@ function App() {
         </form>
         {drillMessage && <p className="message">{drillMessage}</p>}
       </div>
+
+      {/* MOVED CSV Upload SECTION HERE */}
+      <div className="collapsible-section" style={{ border: '1px solid #ccc', padding: '15px', marginTop: '20px', backgroundColor: '#f9f9f9' }}>
+        <button 
+          onClick={() => setIsCsvSectionVisible(!isCsvSectionVisible)}
+          style={{ marginBottom: '10px', fontWeight: 'bold' }}
+        >
+          {isCsvSectionVisible ? 'Hide Bulk Upload Tool ▲' : 'Show Bulk Upload Tool ▼'}
+        </button>
+        {isCsvSectionVisible && (
+          <div className="form-section" style={{ marginTop: '0', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+            <h1 style={{ fontSize: '1.2em', marginBottom: '10px' }}>Upload Players via CSV</h1>
+            <form onSubmit={handleCsvUpload}>
+              <div>
+                <label htmlFor="csvFileInput">Select CSV File:</label>
+                <input
+                  type="file"
+                  id="csvFileInput"
+                  accept=".csv"
+                  onChange={handleCsvFileChange}
+                  // required // Make required or check csvFile state before submit
+                />
+              </div>
+              <button type="submit" disabled={isUploadingCsv || !csvFile}>
+                {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+              </button>
+            </form>
+            {uploadError && <p className="message error">{uploadError}</p>}
+            {uploadSummary && (
+              <div className="message summary">
+                <h3>Upload Summary</h3>
+                <p>Processed Rows: {uploadSummary.processed_rows}</p>
+                <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
+                <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
+                {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
+                  <div>
+                    <h4>Skipped Row Details:</h4>
+                    <ul>
+                      {uploadSummary.skipped_details.map((skip, index) => (
+                        <li key={index}>Row {skip.row}: {skip.reason}</li>
+                        // Optionally display skip.data if needed for debugging
+                        // <pre>{JSON.stringify(skip.data)}</pre>
+                      ))}
+                    </ul>
+                     {/* TODO: Add download skipped rows functionality here */}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {/* --- End CSV Upload Section --- */}
 
       <hr />
 
