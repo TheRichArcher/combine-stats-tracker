@@ -11,7 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Body, Query
-from sqlmodel import Field, SQLModel, create_engine, Session, select
+from sqlmodel import Field, SQLModel, create_engine, Session, select, Column
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from contextlib import asynccontextmanager
@@ -20,6 +20,7 @@ import logging
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import NoResultFound # Import for potential future use
+from sqlalchemy import Enum as SqlEnum # Import sqlalchemy Enum
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -75,6 +76,13 @@ app.add_middleware(
 )
 
 # --- Enums ---
+class AgeGroupEnum(str, Enum):
+    SIX_U = "6U"
+    EIGHT_U = "8U"
+    TEN_U = "10U"
+    TWELVE_U = "12U"
+    FOURTEEN_U = "14U"
+
 class DrillType(str, Enum):
     FORTY_M_DASH = "40m_dash"
     VERTICAL_JUMP = "vertical_jump"
@@ -208,11 +216,12 @@ async def calculate_composite_score(
 
 # --- Models ---
 # Define the allowed age group literals
-AllowedAgeGroup = Literal["6U", "8U", "10U", "12U", "14U"]
+# AllowedAgeGroup = Literal["6U", "8U", "10U", "12U", "14U"]
 
 class PlayerBase(SQLModel):
     name: str
-    age_group: AllowedAgeGroup # Use Literal for validation
+    # Use AgeGroupEnum with sa_column for database mapping
+    age_group: AgeGroupEnum = Field(sa_column=Column(SqlEnum(AgeGroupEnum)))
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -221,9 +230,9 @@ class Player(PlayerBase, table=True):
 
 class PlayerCreate(SQLModel):
     name: str
-    age_group: AllowedAgeGroup # Use Literal for validation
+    age_group: AgeGroupEnum # Use Enum for request validation too
 
-class PlayerRead(PlayerBase): # Inherits name, age_group (which is Literal)
+class PlayerRead(PlayerBase): # Inherits name, age_group (which is now Enum)
     id: int
     number: Optional[int]
     photo_url: Optional[str]
@@ -267,7 +276,7 @@ class PlayerRankingRead(PlayerSummaryRead):
 @app.post("/players/", response_model=PlayerRead)
 async def create_player(
     name: str = Form(...),
-    age_group: AllowedAgeGroup = Form(...), # Use Literal here too
+    age_group: AgeGroupEnum = Form(...), # Use Enum here too
     photo: Optional[UploadFile] = File(None),
     session: AsyncSession = Depends(get_session)
 ):
@@ -404,8 +413,8 @@ async def read_player_summary(
 # New: Get rankings by age group
 @app.get("/rankings/", response_model=List[PlayerRankingRead])
 async def read_rankings(
-    # Use Literal for query parameter validation
-    age_group: Optional[AllowedAgeGroup] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
+    # Use Enum for query parameter validation
+    age_group: Optional[AgeGroupEnum] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
     session: AsyncSession = Depends(get_session)
 ):
     # Build query for players
@@ -448,8 +457,8 @@ async def read_rankings(
 @app.get("/rankings/export")
 async def export_rankings(
     format: Literal["csv", "pdf"] = Query(..., description="Export format: 'csv' or 'pdf'"),
-    # Use Literal for query parameter validation
-    age_group: Optional[AllowedAgeGroup] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
+    # Use Enum for query parameter validation
+    age_group: Optional[AgeGroupEnum] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
     session: AsyncSession = Depends(get_session)
 ):
     # --- 1. Fetch and Rank Players (similar to /rankings endpoint) ---
@@ -579,7 +588,7 @@ async def export_rankings(
         })
 
     else:
-        # Should not happen due to Literal validation, but good practice
+        # Should not happen due to Enum validation, but good practice
         raise HTTPException(status_code=400, detail="Invalid format specified. Use 'csv' or 'pdf'.")
 
 @app.get("/")
