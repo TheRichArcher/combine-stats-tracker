@@ -69,9 +69,6 @@ function App() {
     try {
       const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
       setStream(cameraStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = cameraStream;
-      }
     } catch (err) {
       console.error("Error accessing camera: ", err);
       setPlayerMessage(`Error accessing camera: ${err.name}. Ensure permissions are granted.`);
@@ -291,6 +288,19 @@ function App() {
   };
 
   // --- Effects ---
+  // Effect to handle setting video source object when stream is ready
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+    // Optional: Cleanup srcObject if stream goes away, though stopCameraStream handles tracks
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, [stream]); // Rerun when the stream changes
+
   // Fetch players on initial mount
   useEffect(() => {
     fetchPlayers();
