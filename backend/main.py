@@ -230,32 +230,31 @@ class PlayerRead(PlayerBase): # Inherits name, age_group
 
 # Updated DrillResult Models
 class DrillResultBase(SQLModel):
-    player_id: int = Field(foreign_key="player.id")
+    player_id: int = Field(foreign_key="player.id") # Keep player_id for FK relationship
     drill_type: DrillType
     raw_score: float
-    normalized_score: Optional[float] = Field(default=None) # Added normalized_score
+    normalized_score: Optional[float] = Field(default=None)
 
 class DrillResult(DrillResultBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    # Add relationship if needed for ORM features, but not strictly necessary for this endpoint
-    # player: Optional[Player] = Relationship(back_populates="results")
 
-class DrillResultCreate(DrillResultBase):
+class DrillResultCreate(SQLModel): # No longer inherits Base, define fields explicitly
+    player_number: int # Renamed from player_id for clarity on input
+    drill_type: DrillType
+    raw_score: float
     # Exclude normalized_score from create payload, it will be calculated
     model_config = {
         "json_schema_extra": {
             "example": {
-                "player_id": 1,
+                "player_number": 1400, # Use number in example
                 "drill_type": "40m_dash",
                 "raw_score": 5.5
             }
         }
     }
-    normalized_score: Optional[float] = Field(default=None, exclude=True)
 
 class DrillResultRead(DrillResultBase):
     id: int
-    # normalized_score is inherited from DrillResultBase
 
 # New Response Models for Ranking
 class PlayerSummaryRead(PlayerRead):
@@ -320,23 +319,34 @@ async def create_player(
 # Updated Drill Result Endpoint
 @app.post("/drill-results/", response_model=DrillResultRead)
 async def create_drill_result(
-    drill_result: DrillResultCreate,
+    drill_result: DrillResultCreate, # Use updated create model
     session: AsyncSession = Depends(get_session)
 ):
-    # Basic validation: Check if player exists (optional but good practice)
-    player_exists = await session.get(Player, drill_result.player_id)
-    if not player_exists:
-        raise HTTPException(status_code=404, detail=f"Player with id {drill_result.player_id} not found")
+    # Find player by their number
+    player_result = await session.execute(
+        select(Player).where(Player.number == drill_result.player_number)
+    )
+    player = player_result.scalar_one_or_none() # Use scalar_one_or_none
 
+    if not player:
+        # Use player_number in the error message
+        raise HTTPException(status_code=404, detail=f"Player with number {drill_result.player_number} not found")
+
+    print(f"Found player: {player} based on number {drill_result.player_number}")
     print(f"Received drill result data: {drill_result}")
 
     # Calculate normalized score
     normalized_score = calculate_normalized_score(drill_result.drill_type, drill_result.raw_score)
     print(f"Calculated normalized score: {normalized_score}")
 
-    # Create the database model instance including the normalized score
-    db_drill_result = DrillResult.model_validate(drill_result)
-    db_drill_result.normalized_score = normalized_score # Assign calculated score
+    # Create the database model instance
+    # Use the found player's actual ID for the foreign key
+    db_drill_result = DrillResult(
+        player_id=player.id, # Use player.id here
+        drill_type=drill_result.drill_type,
+        raw_score=drill_result.raw_score,
+        normalized_score=normalized_score
+    )
 
     try:
         session.add(db_drill_result)
@@ -347,7 +357,6 @@ async def create_drill_result(
     except Exception as e:
         await session.rollback()
         print(f"Error creating drill result: {e}")
-        # Consider more specific error handling (e.g., foreign key violation)
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
 # New: Get list of all players
