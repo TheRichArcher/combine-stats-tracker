@@ -207,25 +207,25 @@ async def calculate_composite_score(
     return round(composite_score, 2), best_scores
 
 # --- Models ---
+# Define the allowed age group literals
+AllowedAgeGroup = Literal["6U", "8U", "10U", "12U", "14U"]
+
 class PlayerBase(SQLModel):
     name: str
-    # number: int # Number is now auto-generated
-    age_group: str # Changed from age
-    # photo_url will be handled separately for now
+    age_group: AllowedAgeGroup # Use Literal for validation
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    number: Optional[int] = Field(default=None, unique=True) # Add number field here, make it unique
-    photo_url: Optional[str] = Field(default=None) # Store URL or path later
+    number: Optional[int] = Field(default=None, unique=True)
+    photo_url: Optional[str] = Field(default=None)
 
-class PlayerCreate(SQLModel): # No longer inherits PlayerBase directly
+class PlayerCreate(SQLModel):
     name: str
-    age_group: str
-    # Number and age are removed as they are generated/derived
+    age_group: AllowedAgeGroup # Use Literal for validation
 
-class PlayerRead(PlayerBase): # Inherits name, age_group
+class PlayerRead(PlayerBase): # Inherits name, age_group (which is Literal)
     id: int
-    number: Optional[int] # Include number in read model
+    number: Optional[int]
     photo_url: Optional[str]
 
 # Updated DrillResult Models
@@ -267,7 +267,7 @@ class PlayerRankingRead(PlayerSummaryRead):
 @app.post("/players/", response_model=PlayerRead)
 async def create_player(
     name: str = Form(...),
-    age_group: str = Form(...), # Changed from age, removed number
+    age_group: AllowedAgeGroup = Form(...), # Use Literal here too
     photo: Optional[UploadFile] = File(None),
     session: AsyncSession = Depends(get_session)
 ):
@@ -404,29 +404,15 @@ async def read_player_summary(
 # New: Get rankings by age group
 @app.get("/rankings/", response_model=List[PlayerRankingRead])
 async def read_rankings(
-    age_group: Optional[str] = Query(None, description="Age group filter, e.g., '6-8' or '9-11'"),
+    # Use Literal for query parameter validation
+    age_group: Optional[AllowedAgeGroup] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
     session: AsyncSession = Depends(get_session)
 ):
-    min_age: Optional[int] = None
-    max_age: Optional[int] = None
-
-    # Parse age_group string
-    if age_group:
-        try:
-            min_age_str, max_age_str = age_group.split('-')
-            min_age = int(min_age_str)
-            max_age = int(max_age_str)
-            if min_age > max_age:
-                raise ValueError("Min age cannot be greater than max age")
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid age_group format: {e}. Use 'min-max', e.g., '6-8'.")
-
     # Build query for players
     query = select(Player)
-    if min_age is not None:
-        query = query.where(Player.age >= min_age)
-    if max_age is not None:
-        query = query.where(Player.age <= max_age)
+    if age_group:
+        # Filter directly on the age_group string
+        query = query.where(Player.age_group == age_group)
 
     result = await session.execute(query)
     players = result.scalars().all()
@@ -462,28 +448,15 @@ async def read_rankings(
 @app.get("/rankings/export")
 async def export_rankings(
     format: Literal["csv", "pdf"] = Query(..., description="Export format: 'csv' or 'pdf'"),
-    age_group: Optional[str] = Query(None, description="Age group filter, e.g., '6-8' or '9-11'"),
+    # Use Literal for query parameter validation
+    age_group: Optional[AllowedAgeGroup] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
     session: AsyncSession = Depends(get_session)
 ):
     # --- 1. Fetch and Rank Players (similar to /rankings endpoint) ---
-    min_age: Optional[int] = None
-    max_age: Optional[int] = None
-
-    if age_group:
-        try:
-            min_age_str, max_age_str = age_group.split('-')
-            min_age = int(min_age_str)
-            max_age = int(max_age_str)
-            if min_age > max_age:
-                raise ValueError("Min age cannot be greater than max age")
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid age_group format: {e}. Use 'min-max', e.g., '6-8'.")
-
     query = select(Player)
-    if min_age is not None:
-        query = query.where(Player.age >= min_age)
-    if max_age is not None:
-        query = query.where(Player.age <= max_age)
+    if age_group:
+        # Filter directly on the age_group string
+        query = query.where(Player.age_group == age_group)
 
     result = await session.execute(query)
     players = result.scalars().all()
