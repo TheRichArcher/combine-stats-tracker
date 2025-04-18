@@ -543,9 +543,9 @@ async def export_rankings(
         story.append(Paragraph(f"Generated on: {datetime.date.today()}", styles['Normal']))
         story.append(Spacer(1, 0.3*inch))
 
-        # Prepare table data - Update Headers
+        # Prepare table data - Remove Photo URL from header
         header = ["Rank", "Name", "Number", "Age Group", "Composite Score"] + \
-                 [dt.value.replace('_',' ').title() for dt in DrillType] + ["Photo URL"]
+                 [dt.value.replace('_',' ').title() for dt in DrillType] # Removed: + ["Photo URL"]
         table_data = [header]
 
         for player_data in ranked_player_export_data:
@@ -558,21 +558,20 @@ async def export_rankings(
                 str(player_data["Rank"]),
                 str(player_data["Name"]),
                 str(player_data["Number"]),
-                str(age_group_val), # Use processed string value
+                str(age_group_val),
                 f"{player_data['CompositeScore']:.2f}",
             ]
             # Add drill scores (already formatted as strings or 'N/A')
             for drill_type_enum in DrillType:
                  row.append(player_data[drill_type_enum.value])
-            # Add Photo URL (already formatted as string or 'N/A')
-            row.append(player_data["PhotoURL"])
+            # Removed: row.append(player_data["PhotoURL"])
             table_data.append(row)
 
         if not ranked_player_export_data: # Handle empty data
              story.append(Paragraph("No players found for this age group.", styles['Normal']))
         else:
-            # Create and style table - Widen Photo URL column slightly
-            table = Table(table_data, colWidths=([0.5*inch] + [1.5*inch]*1 + [0.7*inch]*1 + [0.8*inch]*1 + [1.0*inch]*1 + [0.8*inch]*len(DrillType) + [1.8*inch]*1 )) # Adjusted Num, AgeGroup, PhotoURL widths
+            # Create and style table - Remove Photo URL width, adjust others
+            table = Table(table_data, colWidths=([0.5*inch] + [1.8*inch]*1 + [0.7*inch]*1 + [0.9*inch]*1 + [1.1*inch]*1 + [0.9*inch]*len(DrillType) )) # Total width reduced
             # Updated TableStyle (mostly unchanged, ensures bold header)
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
