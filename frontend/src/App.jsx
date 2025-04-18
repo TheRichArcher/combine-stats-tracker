@@ -62,19 +62,6 @@ function App() {
   // --- Export State ---
   const [exportFormat, setExportFormat] = useState('csv'); // 'csv' or 'pdf'
 
-  // --- Helper Function ---
-  const ageGroupDisplayToParam = (displayValue) => {
-    switch (displayValue) {
-      case '6U': return '0-6'; // Assuming 6 and under
-      case '8U': return '7-8';
-      case '10U': return '9-10';
-      case '12U': return '11-12';
-      case '14U': return '13-14';
-      // Add cases for any other age groups if needed
-      default: return ''; // Handle empty selection or unknown values
-    }
-  };
-
   // --- Player Form Handlers ---
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -286,27 +273,33 @@ function App() {
   };
 
   const fetchRankings = async (ageGroupDisplay) => {
-    const ageGroupParam = ageGroupDisplayToParam(ageGroupDisplay);
-    if (!ageGroupParam) {
-        setRankings([]); // Clear rankings if no group selected or invalid
+    if (!ageGroupDisplay) {
+        setRankings([]);
         setRankingsError('');
         return;
     }
     setRankingsLoading(true);
     setRankingsError('');
-    setRankings([]); // Clear previous rankings
+    setRankings([]);
     try {
-        // Use API_BASE_URL and the translated param
-        const response = await fetch(`${API_BASE_URL}/rankings/?age_group=${encodeURIComponent(ageGroupParam)}`);
+        const response = await fetch(`${API_BASE_URL}/rankings/?age_group=${encodeURIComponent(ageGroupDisplay)}`);
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            let errorDetail = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.detail || errorDetail;
+            } catch (jsonError) {}
+            throw new HttpError(response.status, errorDetail);
         }
         const data = await response.json();
         setRankings(data);
     } catch (error) {
-        console.error(`Error fetching rankings for age group ${ageGroupParam}:`, error);
-        setRankingsError(`Failed to load rankings: ${error.message}`);
+        console.error(`Error fetching rankings for age group ${ageGroupDisplay}:`, error);
+        if (error instanceof HttpError) {
+            setRankingsError(`Failed to load rankings: ${error.detail}`);
+        } else {
+            setRankingsError(`Failed to load rankings: ${error.message || error.toString()}`);
+        }
     } finally {
         setRankingsLoading(false);
     }
@@ -314,15 +307,12 @@ function App() {
 
   // --- Export Handler ---
   const handleExport = () => {
-    const ageGroupParam = ageGroupDisplayToParam(selectedAgeGroup);
-    if (!ageGroupParam) {
+    if (!selectedAgeGroup) {
         alert("Please select a valid age group to export.");
         return;
     }
-    // Use API_BASE_URL and the translated param
-    const exportUrl = `${API_BASE_URL}/rankings/export?format=${exportFormat}&age_group=${encodeURIComponent(ageGroupParam)}`;
+    const exportUrl = `${API_BASE_URL}/rankings/export?format=${exportFormat}&age_group=${encodeURIComponent(selectedAgeGroup)}`;
     
-    // Trigger download by navigating to the URL
     window.location.href = exportUrl;
   };
 
