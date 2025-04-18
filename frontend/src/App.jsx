@@ -34,6 +34,7 @@ function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
+  const [generatedPlayerNumber, setGeneratedPlayerNumber] = useState(null); // State for the generated number
 
   // --- CSV Upload State ---
   const [csvFile, setCsvFile] = useState(null);
@@ -126,11 +127,13 @@ function App() {
     event.preventDefault();
     setIsSubmittingPlayer(true);
     setPlayerMessage('');
+    setGeneratedPlayerNumber(null); // Clear previous generated number
 
     // Validate name and ageGroup
     if (!name || !ageGroup) {
         setPlayerMessage('Please fill in Name and select an Age Group.');
         setIsSubmittingPlayer(false);
+        setGeneratedPlayerNumber(null); // Clear number on error too
         return;
     }
 
@@ -155,7 +158,9 @@ function App() {
       }
 
       const result = await response.json();
-      setPlayerMessage(`Player ${result.name} (Generated Number: ${result.number}) created successfully!`);
+      // Update state with the generated number and set a simpler success message
+      setGeneratedPlayerNumber(result.number);
+      setPlayerMessage(`Player ${result.name} created successfully!`);
       setName('');
       setAgeGroup(''); // Reset age group dropdown
       setPhoto(null);
@@ -167,6 +172,7 @@ function App() {
     } catch (error) {
       console.error('Error creating player:', error);
       setPlayerMessage(`Error creating player: ${error.message}`);
+      setGeneratedPlayerNumber(null); // Clear number on error too
     } finally {
       setIsSubmittingPlayer(false);
     }
@@ -486,7 +492,8 @@ function App() {
               type="text"
               id="generatedNumber"
               readOnly
-              placeholder="(Auto-generated after creation)"
+              value={generatedPlayerNumber || ''}
+              placeholder="(Generating...)"
               style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
             />
             <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
