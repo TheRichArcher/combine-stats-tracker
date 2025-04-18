@@ -200,7 +200,8 @@ function App() {
     }
 
     setIsUploadingCsv(true);
-    setUploadError('');
+    // Clear previous results immediately upon starting new upload
+    setUploadError(''); 
     setUploadSummary(null);
 
     const formData = new FormData();
