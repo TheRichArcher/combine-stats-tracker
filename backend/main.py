@@ -535,25 +535,31 @@ async def export_rankings(
         styles = getSampleStyleSheet()
         story = []
 
-        # Title
-        title = f"Combine Player Rankings - Age Group: {age_group if age_group else 'All'}"
+        # Title - Use .value for Enum
+        age_group_str = age_group.value if age_group else 'All'
+        title = f"Combine Player Rankings - Age Group: {age_group_str}"
         story.append(Paragraph(title, styles['h1']))
         story.append(Spacer(1, 0.2*inch))
         story.append(Paragraph(f"Generated on: {datetime.date.today()}", styles['Normal']))
         story.append(Spacer(1, 0.3*inch))
 
-        # Prepare table data
-        header = ["Rank", "Name", "Num", "Age Group", "Comp Score"] + \
+        # Prepare table data - Update Headers
+        header = ["Rank", "Name", "Number", "Age Group", "Composite Score"] + \
                  [dt.value.replace('_',' ').title() for dt in DrillType] + ["Photo URL"]
         table_data = [header]
 
         for player_data in ranked_player_export_data:
+            # Ensure age_group is the string value
+            age_group_val = player_data["AgeGroup"]
+            if isinstance(age_group_val, AgeGroupEnum):
+                age_group_val = age_group_val.value
+            
             row = [
                 str(player_data["Rank"]),
                 str(player_data["Name"]),
                 str(player_data["Number"]),
-                str(player_data["AgeGroup"]), # Already a string, but explicit is safe
-                f"{player_data['CompositeScore']:.2f}", # Already a string
+                str(age_group_val), # Use processed string value
+                f"{player_data['CompositeScore']:.2f}",
             ]
             # Add drill scores (already formatted as strings or 'N/A')
             for drill_type_enum in DrillType:
@@ -565,15 +571,14 @@ async def export_rankings(
         if not ranked_player_export_data: # Handle empty data
              story.append(Paragraph("No players found for this age group.", styles['Normal']))
         else:
-            # Create and style table
-            table = Table(table_data, colWidths=([0.5*inch] + [1.5*inch]*1 + [0.5*inch]*1 + [0.8*inch]*1 + [1.0*inch]*1 + [0.8*inch]*len(DrillType) + [1.5*inch]*1 )) # Adjusted AgeGroup width
-            # Updated TableStyle
+            # Create and style table - Widen Photo URL column slightly
+            table = Table(table_data, colWidths=([0.5*inch] + [1.5*inch]*1 + [0.7*inch]*1 + [0.8*inch]*1 + [1.0*inch]*1 + [0.8*inch]*len(DrillType) + [1.8*inch]*1 )) # Adjusted Num, AgeGroup, PhotoURL widths
+            # Updated TableStyle (mostly unchanged, ensures bold header)
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'), # Center align all
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                # ('BOTTOMPADDING', (0, 0), (-1, 0), 12), # Use default or smaller padding
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'), # Bold header
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0,0), (-1,-1), 0.5, colors.grey), # Thinner grid lines
                 ('FONTSIZE', (0,0), (-1,0), 10), # Header font size
