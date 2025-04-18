@@ -495,7 +495,7 @@ async def export_rankings(
             "Rank": rank_to_assign,
             "Name": player_data['name'],
             "Number": player_data['number'],
-            "Age": player_data['age'],
+            "AgeGroup": player_data['age_group'],
             "CompositeScore": player_data['composite_score'],
             "PhotoURL": player_data['photo_url'] if player_data['photo_url'] else "N/A",
         }
@@ -518,7 +518,7 @@ async def export_rankings(
         media_type = "text/csv"
         df = pd.DataFrame(ranked_player_export_data)
         # Reorder columns for clarity
-        column_order = ["Rank", "Name", "Number", "Age", "CompositeScore"] + \
+        column_order = ["Rank", "Name", "Number", "AgeGroup", "CompositeScore"] + \
                        [dt.value for dt in DrillType] + ["PhotoURL"]
         df = df[column_order]
         csv_content = df.to_csv(index=False)
@@ -543,7 +543,7 @@ async def export_rankings(
         story.append(Spacer(1, 0.3*inch))
 
         # Prepare table data
-        header = ["Rank", "Name", "Num", "Age", "Comp Score"] + \
+        header = ["Rank", "Name", "Num", "Age Group", "Comp Score"] + \
                  [dt.value.replace('_',' ').title() for dt in DrillType] + ["Photo URL"]
         table_data = [header]
 
@@ -552,7 +552,7 @@ async def export_rankings(
                 player_data["Rank"],
                 player_data["Name"],
                 player_data["Number"],
-                player_data["Age"],
+                player_data["AgeGroup"],
                 f"{player_data['CompositeScore']:.2f}",
             ]
             # Add drill scores
