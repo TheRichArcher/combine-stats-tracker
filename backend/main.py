@@ -11,8 +11,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Body, Query
-from sqlmodel import Field, SQLModel, create_engine, Session, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Field, SQLModel, Session, select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -31,8 +31,9 @@ if DATABASE_URL == "postgresql+asyncpg://user:password@host:port/dbname":
     # In a real app, you might want to raise an error or exit if the DB URL isn't set.
 
 # --- Database Setup ---
-# Revert back to sqlmodel.create_engine
-engine = create_engine(DATABASE_URL, echo=True, future=True)
+# Use explicit async engine
+# IMPORTANT: Ensure DATABASE_URL uses postgresql+asyncpg:// protocol
+engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
 async def init_db():
     async with engine.begin() as conn:
