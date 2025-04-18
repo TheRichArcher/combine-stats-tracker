@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
 
 // --- Define Custom Error Class ---
@@ -431,7 +432,11 @@ function App() {
 
   // Fetch results when selected player changes
   useEffect(() => {
-    fetchPlayerResults(selectedPlayerIdForView);
+    if (selectedPlayerIdForView) {
+      fetchPlayerResults(selectedPlayerIdForView);
+    } else {
+      setSelectedPlayerResults([]); // Clear results if no player is selected
+    }
   }, [selectedPlayerIdForView]);
 
   // Fetch rankings when selected age group changes
@@ -455,6 +460,45 @@ function App() {
       stopCameraStream();
     };
   }, [stream]);
+
+  // --- Helper Function to Format Player Options for react-select ---
+  const formatPlayerOptions = (players) => {
+    const groupedOptions = {};
+
+    // Sort players alphabetically first
+    const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedPlayers.forEach(player => {
+      const label = `${player.name} (ID: ${player.id}, Num: ${player.number})`;
+      const option = { value: player.id, label: label };
+      const groupLabel = player.age_group || 'Unknown Age Group'; // Group by age_group
+
+      if (!groupedOptions[groupLabel]) {
+        groupedOptions[groupLabel] = {
+          label: groupLabel,
+          options: [],
+        };
+      }
+      groupedOptions[groupLabel].options.push(option);
+    });
+
+    // Sort group labels if necessary (e.g., U10 before U12)
+    // This basic sort works for "U<number>" format. Adjust if needed.
+    const sortedGroupLabels = Object.keys(groupedOptions).sort((a, b) => {
+        const numA = parseInt(a.replace('U', ''), 10);
+        const numB = parseInt(b.replace('U', ''), 10);
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+        }
+        // Handle non-numeric or 'Unknown' groups
+        if (a === 'Unknown Age Group') return 1;
+        if (b === 'Unknown Age Group') return -1;
+        return a.localeCompare(b);
+    });
+
+
+    return sortedGroupLabels.map(label => groupedOptions[label]);
+  };
 
   // --- Render --- 
   return (
@@ -658,21 +702,22 @@ function App() {
           {playersLoading && <p>Loading players...</p>}
           {playersError && <p className="message error">{playersError}</p>}
           {!playersLoading && !playersError && (
-            <select
+            <Select // <-- Use react-select component
               id="playerSelect"
-              value={selectedPlayerIdForView}
-              onChange={(e) => setSelectedPlayerIdForView(e.target.value)}
-            >
-              <option value="">-- Select a Player --</option>
-              {/* Sort players alphabetically before mapping */}
-              {[...allPlayers]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.name} (ID: {player.id}, Num: {player.number})
-                  </option>
-              ))}
-            </select>
+              options={formatPlayerOptions(allPlayers)} // <-- Pass formatted & grouped options
+              value={formatPlayerOptions(allPlayers) // Find the selected option object to control the component
+                .flatMap(group => group.options) // Flatten groups to search all options
+                .find(option => option.value === selectedPlayerIdForView) || null}
+              onChange={(selectedOption) => {
+                setSelectedPlayerIdForView(selectedOption ? selectedOption.value : ''); // Update state with selected player ID
+              }}
+              isClearable // Allow clearing the selection
+              placeholder="-- Type to search or select a Player --"
+              styles={{ // Optional: basic styling adjustments
+                  container: (provided) => ({ ...provided, marginTop: '5px', marginBottom: '15px' }),
+                  menu: (provided) => ({ ...provided, zIndex: 9999 }) // Ensure dropdown appears above other elements
+              }}
+            />
           )}
         </div>
 
