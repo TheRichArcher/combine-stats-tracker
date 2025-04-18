@@ -1,4 +1,4 @@
-/* Reset & Base Styles */
+/* Base Reset */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -7,72 +7,66 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f7f9fb;
-  color: #333;
-  line-height: 1.6;
-  padding: 20px;
+  background-color: #f3f6f9;
+  color: #0f1d2e;
+  padding: 16px;
 }
 
-/* Layout Container */
+/* Container for mobile screens */
 .container {
-  max-width: 900px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 20px;
 }
 
 /* Headings */
 h1, h2 {
-  color: #1f2937;
+  color: #0f1d2e;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Forms & Cards */
+form, .card {
+  background-color: #ffffff;
+  padding: 16px;
   margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Form Elements */
-form {
-  margin-bottom: 30px;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
+/* Labels and Inputs */
 label {
   display: block;
   margin-bottom: 6px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 input, select, button {
   width: 100%;
   padding: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1rem;
 }
 
 /* Buttons */
 button {
-  background-color: #2563eb;
+  background-color: #00bcd4;
   color: white;
   font-weight: bold;
-  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
   transition: background-color 0.2s ease-in-out;
 }
 
 button:hover {
-  background-color: #1d4ed8;
+  background-color: #0277bd;
 }
 
-/* Card or Result Display */
-.card {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-}
-
-/* Tables for Rankings/Stats */
+/* Tables */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -80,11 +74,18 @@ table {
 }
 
 th, td {
-  padding: 12px;
+  padding: 10px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 th {
-  background-color: #f0f4f8;
+  background-color: #e0f7fa;
+}
+
+/* Logo Integration (optional) */
+.logo {
+  width: 120px;
+  display: block;
+  margin: 0 auto 20px;
 } 
