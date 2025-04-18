@@ -26,7 +26,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 function App() {
   // --- Player Form State ---
   const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
   const [ageGroup, setAgeGroup] = useState('');
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -126,7 +125,6 @@ function App() {
     event.preventDefault();
     setIsSubmittingPlayer(true);
     setPlayerMessage('');
-    setNumber(''); // Clear any previously displayed number
 
     // Validate name and ageGroup
     if (!name || !ageGroup) {
@@ -436,16 +434,6 @@ function App() {
             />
           </div>
           <div>
-            <label htmlFor="number">Number:</label>
-            <input
-              type="text"
-              id="number"
-              value={number}
-              readOnly
-              placeholder="(Auto-generated after creation)"
-            />
-          </div>
-          <div>
             <label htmlFor="ageGroup">Age Group:</label>
             <select
               id="ageGroup"
@@ -490,6 +478,21 @@ function App() {
             {isSubmittingPlayer ? 'Submitting...' : 'Create Player'}
           </button>
         </form>
+        {playerMessage && playerMessage.includes('successfully!') && (
+          <div style={{ marginTop: '10px' }}>
+            <label htmlFor="generatedNumber">Number:</label>
+            <input
+              type="text"
+              id="generatedNumber"
+              readOnly
+              placeholder="(Auto-generated after creation)"
+              style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
+            />
+            <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
+               Generated After Creation
+            </em>
+          </div>
+        )}
         {playerMessage && <p className="message">{playerMessage}</p>}
       </div>
 
