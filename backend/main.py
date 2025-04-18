@@ -220,8 +220,8 @@ async def calculate_composite_score(
 
 class PlayerBase(SQLModel):
     name: str
-    # Use AgeGroupEnum with sa_column for database mapping
-    age_group: AgeGroupEnum = Field(sa_column=Column(SqlEnum(AgeGroupEnum)))
+    # Use AgeGroupEnum with sa_column for database mapping, disable native enum
+    age_group: AgeGroupEnum = Field(sa_column=Column(SqlEnum(AgeGroupEnum, native_enum=False)))
 
 class Player(PlayerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
