@@ -11,7 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Body, Query
-from sqlmodel import Field, SQLModel, Session, select
+from sqlmodel import Field, SQLModel, create_engine, Session, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from contextlib import asynccontextmanager
@@ -31,13 +31,8 @@ if DATABASE_URL == "postgresql+asyncpg://user:password@host:port/dbname":
     # In a real app, you might want to raise an error or exit if the DB URL isn't set.
 
 # --- Database Setup ---
-# Use explicit async engine. Render handles SSL automatically for asyncpg.
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,
-    # future=True, # future=True is default/deprecated in SQLAlchemy 2.0+
-    # connect_args={"ssl": "require"} # Removed: Render handles SSL; causes TypeError with asyncpg
-)
+# Use explicit async engine for FastAPI
+engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
 async def init_db():
     async with engine.begin() as conn:
@@ -68,6 +63,7 @@ app = FastAPI(lifespan=lifespan)
 # You can use "*" for development, but be specific in production
 origins = [
     "http://localhost:5173", # Allow frontend dev server
+    "https://combine-stats-tracker-frontend.onrender.com", # Allow deployed frontend
     # "https://your-frontend-name.onrender.com", # Add your Render frontend URL here!
     # "*" # Use cautiously for testing
 ]
