@@ -69,6 +69,29 @@ function App() {
   // --- Export State ---
   const [exportFormat, setExportFormat] = useState('csv'); // 'csv' or 'pdf'
 
+  // --- Effects for Auto-clearing CSV Messages ---
+  useEffect(() => {
+    let summaryTimer;
+    if (uploadSummary) {
+      summaryTimer = setTimeout(() => {
+        setUploadSummary(null); // Clear summary after 5 seconds
+      }, 5000); 
+    }
+    // Cleanup function to clear the timeout if summary changes or component unmounts
+    return () => clearTimeout(summaryTimer);
+  }, [uploadSummary]); // Re-run effect only when uploadSummary changes
+
+  useEffect(() => {
+    let errorTimer;
+    if (uploadError) {
+      errorTimer = setTimeout(() => {
+        setUploadError(''); // Clear error after 5 seconds
+      }, 5000); 
+    }
+    // Cleanup function to clear the timeout if error changes or component unmounts
+    return () => clearTimeout(errorTimer);
+  }, [uploadError]); // Re-run effect only when uploadError changes
+
   // --- Player Form Handlers ---
   const handleFileChange = (event) => {
     const file = event.target.files[0];
