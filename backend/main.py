@@ -31,9 +31,13 @@ if DATABASE_URL == "postgresql+asyncpg://user:password@host:port/dbname":
     # In a real app, you might want to raise an error or exit if the DB URL isn't set.
 
 # --- Database Setup ---
-# Use explicit async engine
-# IMPORTANT: Ensure DATABASE_URL uses postgresql+asyncpg:// protocol
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+# Use explicit async engine with connect_args for SSL
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=True,
+    # future=True, # future=True is default/deprecated in SQLAlchemy 2.0+
+    connect_args={"ssl": "require"} # Pass SSL mode via connect_args for asyncpg
+)
 
 async def init_db():
     async with engine.begin() as conn:
