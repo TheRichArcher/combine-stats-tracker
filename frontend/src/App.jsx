@@ -49,6 +49,7 @@ function App() {
   const [rawScore, setRawScore] = useState('');
   const [drillMessage, setDrillMessage] = useState('');
   const [isSubmittingDrill, setIsSubmittingDrill] = useState(false);
+  const [matchedPlayer, setMatchedPlayer] = useState(null); // <-- Add this line
 
   // --- Player Results Viewer State ---
   const [allPlayers, setAllPlayers] = useState([]);
@@ -438,6 +439,16 @@ function App() {
       fetchRankings(selectedAgeGroup);
   }, [selectedAgeGroup]);
 
+  // Match player number input in drill form
+  useEffect(() => {
+    if (playerId && allPlayers.length > 0) {
+      const match = allPlayers.find(p => p.number.toString() === playerId);
+      setMatchedPlayer(match || null);
+    } else {
+      setMatchedPlayer(null); // Clear if input is empty or players aren't loaded
+    }
+  }, [playerId, allPlayers]); // <-- Add this useEffect
+
   // Clean up camera stream on component unmount
   useEffect(() => {
     return () => {
@@ -544,6 +555,14 @@ function App() {
                     onChange={(e) => setPlayerId(e.target.value)}
                     required
                 />
+                {/* Add matched player display below input */}
+                {playerId && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
+                    {matchedPlayer
+                      ? <span style={{ fontWeight: 'bold', color: 'green' }}>✅ Matched: {matchedPlayer.name}</span>
+                      : <span style={{ fontWeight: 'bold', color: 'red' }}>❌ No player found with this number</span>}
+                  </div>
+                )}
             </div>
             <div>
                 <label htmlFor="drillType">Drill Type:</label>
@@ -645,10 +664,13 @@ function App() {
               onChange={(e) => setSelectedPlayerIdForView(e.target.value)}
             >
               <option value="">-- Select a Player --</option>
-              {allPlayers.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.name} (ID: {player.id}, Num: {player.number})
-                </option>
+              {/* Sort players alphabetically before mapping */}
+              {[...allPlayers]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.name} (ID: {player.id}, Num: {player.number})
+                  </option>
               ))}
             </select>
           )}
