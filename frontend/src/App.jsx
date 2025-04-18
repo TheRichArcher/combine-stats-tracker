@@ -205,6 +205,7 @@ function App() {
 
         const result = await response.json();
         setDrillMessage(`Drill result ID ${result.id} for Player ${result.player_id} (${result.drill_type}) recorded successfully!`);
+        setRawScore(''); // Clear raw score input on success
         // If the submitted result is for the currently viewed player, refresh their results
         if (result.player_id === parseInt(selectedPlayerIdForView, 10)) {
             fetchPlayerResults(selectedPlayerIdForView);
