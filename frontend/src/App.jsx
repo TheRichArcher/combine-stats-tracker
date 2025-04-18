@@ -213,30 +213,18 @@ function App() {
         fetchRankings(selectedAgeGroup);
 
     } catch (error) {
-        console.error('Error submitting drill result:', error);
-        // Replace the old error message logic with the new one
-        if (error instanceof Error && error.message.startsWith('HTTP error') || error instanceof Response) {
-            // Attempt to parse backend detail if available
-            try {
-                // If it's a custom Error wrapping a fetch response failure
-                const detailMatch = error.message.match(/{"detail":"(.+)"}/);
-                if (detailMatch && detailMatch[1]) {
-                    setDrillMessage(`Error: ${detailMatch[1]}`);
-                } else if (error instanceof Response) {
-                    // If it's directly a Response object (less likely with current try/catch)
-                    const errorData = await error.json();
-                    setDrillMessage(`Error: ${errorData.detail || "Unknown HTTP error occurred."}`);
-                } else {
-                     setDrillMessage(`Error: ${error.message || "Unknown error occurred."}`);
-                }
-            } catch (parseError) {
-                // Fallback if parsing fails or it's not the expected format
-                setDrillMessage(`Error: ${error.message || error.toString()}`);
-            }
-        } else {
-            // Handle other types of errors (e.g., network errors, JS errors)
-            setDrillMessage(`Error: ${error.message || error.toString()}`);
+      console.error("Error submitting drill result:", error);
+    
+      if (error instanceof Response) {
+        try {
+          const errorData = await error.json();
+          setDrillMessage(`Error: ${errorData.detail || "Unknown error from server."}`);
+        } catch (jsonError) {
+          setDrillMessage("Error: Failed to parse error response from server.");
         }
+      } else {
+        setDrillMessage(`Error: ${error.message || error.toString()}`);
+      }
     } finally {
         setIsSubmittingDrill(false);
     }
