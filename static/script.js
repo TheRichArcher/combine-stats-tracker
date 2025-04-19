@@ -1,3 +1,5 @@
+console.log("static/script.js loaded successfully."); // Add confirmation log
+
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -21,16 +21,16 @@ app = FastAPI(title="Combine App API")
 # --- CORS Middleware --- NEW
 # Define the origins allowed to access the API
 # In production, restrict this to your actual frontend domain
-# origins = [
-#     "https://woo-combine.com",
-#     # You might also need http://localhost:xxxx equivalents for local dev
-#     # "http://localhost",
-#     # "http://localhost:8080", # Example port
-#     # "http://localhost:3000", # Example port for React dev server
-# ]
+origins = [
+    "https://woo-combine.com",
+    # You might also need http://localhost:xxxx equivalents for local dev
+    # "http://localhost",
+    # "http://localhost:8080", # Example port
+    # "http://localhost:3000", # Example port for React dev server
+]
 
-# TEMPORARY TEST: Allow all origins
-origins = ["*"]
+# TEMPORARY TEST: Allow all origins - REMOVED
+# origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
