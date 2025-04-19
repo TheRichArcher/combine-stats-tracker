@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 
 # Assuming database.py and models.py are in the same directory or accessible
 import models
@@ -16,6 +17,25 @@ if not os.path.exists('./test.db'):
     print("Database initialized.")
 
 app = FastAPI(title="Combine App API")
+
+# --- CORS Middleware --- NEW
+# Define the origins allowed to access the API
+# In production, restrict this to your actual frontend domain
+origins = [
+    "https://woo-combine.com",
+    # You might also need http://localhost:xxxx equivalents for local dev
+    # "http://localhost",
+    # "http://localhost:8080", # Example port
+    # "http://localhost:3000", # Example port for React dev server
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], # Allow relevant methods
+    allow_headers=["*"], # Allow all headers
+)
 
 # --- Database Dependency ---
 # (Adapt this based on your database.py setup - assuming a session generator)

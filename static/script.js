@@ -109,26 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Replace with your actual fetch logic:
         try {
-            // Simulate network delay for spinner visibility
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // --- Mock data for demonstration --- START
-            const mockPlayers = [
-                { id: 1, name: 'Alice Smith', jersey_number: 10 },
-                { id: 2, name: 'Bob Johnson', jersey_number: 22 },
-                { id: 3, name: 'Charlie Brown', jersey_number: 7 }
-            ];
-            populatePlayerList(mockPlayers);
-            // --- Mock data for demonstration --- END
-
-            /* Uncomment and use your actual fetch
+            // Uncomment and use your actual fetch
             const response = await fetch('/players');
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Attempt to get more specific error info if possible
+                let errorDetail = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorDetail += `, ${errorJson.detail || JSON.stringify(errorJson)}`;
+                } catch (jsonError) {
+                    // Ignore if response is not JSON or empty
+                }
+                throw new Error(errorDetail);
             }
             const players = await response.json();
             populatePlayerList(players);
-            */
+
         } catch (error) {
             console.error('Error fetching players:', error);
             if (playerList) {
