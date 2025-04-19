@@ -176,6 +176,24 @@ section {
     font-size: 0.8em;
 }
 
+/* --- NEW: Link-style Button for Toggles --- */
+.button-link-style {
+  background: none;
+  border: none;
+  color: #007bff; /* Or your theme's link color */
+  padding: 5px; /* Minimal padding */
+  font-size: 0.9em;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 10px;
+  display: inline-block; /* Ensure it behaves like a block for margin */
+}
+
+.button-link-style:hover {
+  color: #0056b3;
+  background: none; /* Ensure hover doesn't add background */
+}
+/* --- End Link-style Button --- */
 
 /* --- NEW: Modal Styles --- */
 
