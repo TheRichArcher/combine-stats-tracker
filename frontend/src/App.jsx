@@ -132,6 +132,7 @@ function App() {
       // const headers = { 'Authorization': `Bearer ${your_jwt_token}` };
       const response = await fetch(`${API_BASE_URL}/players/reset`, {
         method: 'DELETE',
+        credentials: 'include',
         // headers: headers, // Add headers here when auth is ready
       });
 
@@ -237,6 +238,7 @@ function App() {
       // Use API_BASE_URL
       const response = await fetch(`${API_BASE_URL}/players/`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 
@@ -298,6 +300,7 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/players/upload_csv`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 
@@ -347,6 +350,7 @@ function App() {
         // Use API_BASE_URL
         const response = await fetch(`${API_BASE_URL}/drill-results/`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -394,7 +398,9 @@ function App() {
     setPlayersError('');
     try {
       // Use API_BASE_URL
-      const response = await fetch(`${API_BASE_URL}/players/`);
+      const response = await fetch(`${API_BASE_URL}/players/`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -415,7 +421,9 @@ function App() {
     setSelectedPlayerResults([]); // Clear previous results
     try {
       // Use API_BASE_URL
-      const response = await fetch(`${API_BASE_URL}/players/${pId}/results/`);
+      const response = await fetch(`${API_BASE_URL}/players/${pId}/results/`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -440,7 +448,9 @@ function App() {
     setRankingsError('');
     setRankings([]);
     try {
-        const response = await fetch(`${API_BASE_URL}/rankings/?age_group=${encodeURIComponent(ageGroupDisplay)}`);
+        const response = await fetch(`${API_BASE_URL}/rankings/?age_group=${encodeURIComponent(ageGroupDisplay)}`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             let errorDetail = `HTTP error! status: ${response.status}`;
             try {

@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use full URL for fetch, ensure NO trailing slash
             const response = await fetch(`${API_BASE_URL}/players/reset`, {
                 method: 'DELETE',
+                credentials: 'include',
             });
 
             const result = await response.json();
@@ -116,7 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Replace with your actual fetch logic:
         try {
             // Use full URL for fetch, ensure WITH trailing slash
-            const response = await fetch(`${API_BASE_URL}/players/`);
+            const response = await fetch(`${API_BASE_URL}/players/`, {
+                credentials: 'include',
+            });
             if (!response.ok) {
                 // Attempt to get more specific error info if possible
                 let errorDetail = `HTTP error! status: ${response.status}`;
