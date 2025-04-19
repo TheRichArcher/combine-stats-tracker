@@ -1,3 +1,16 @@
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/serviceWorker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elements ---
     const resetPlayersBtn = document.getElementById('resetPlayersBtn');
@@ -7,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmResetStep2Btn = document.getElementById('confirmResetStep2');
     const resetConfirmTextInput = document.getElementById('resetConfirmText');
     const playerList = document.getElementById('playerList'); // Assuming this exists for fetchPlayers
+    const loadingIndicator = document.getElementById('loadingIndicator'); // Get loading indicator
 
     // --- Modals ---
     const resetConfirmationModal = new bootstrap.Modal(resetConfirmationModalEl);
@@ -80,43 +94,104 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Placeholder Functions (Replace or integrate with your existing code) ---
-
     // Function to fetch players (you should have this already)
     async function fetchPlayers() {
         console.log('Fetching players...');
-        // Example placeholder: Clear list and maybe show a loading state
-        if (playerList) playerList.innerHTML = '<li>Loading players...</li>';
+        if (loadingIndicator) loadingIndicator.style.display = 'flex'; // Show spinner
+        if (playerList) {
+             // Clear only player items, not the spinner initially
+             Array.from(playerList.children).forEach(child => {
+                 if (child.id !== 'loadingIndicator') {
+                     playerList.removeChild(child);
+                 }
+             });
+        }
+
         // Replace with your actual fetch logic:
-        // try {
-        //     const response = await fetch('/players');
-        //     const players = await response.json();
-        //     populatePlayerList(players);
-        // } catch (error) {
-        //     console.error('Error fetching players:', error);
-        //     if (playerList) playerList.innerHTML = '<li>Error loading players.</li>';
-        //      showToast('Error fetching players.', 'danger');
-        // }
-        // --- Mock refreshing list after reset for now ---
-        setTimeout(() => {
-             if (playerList) playerList.innerHTML = '<li>Player list refreshed (mock).</li>';
-        }, 500);
-         // --- End Mock ---
+        try {
+            // Simulate network delay for spinner visibility
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // --- Mock data for demonstration --- START
+            const mockPlayers = [
+                { id: 1, name: 'Alice Smith', jersey_number: 10 },
+                { id: 2, name: 'Bob Johnson', jersey_number: 22 },
+                { id: 3, name: 'Charlie Brown', jersey_number: 7 }
+            ];
+            populatePlayerList(mockPlayers);
+            // --- Mock data for demonstration --- END
+
+            /* Uncomment and use your actual fetch
+            const response = await fetch('/players');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const players = await response.json();
+            populatePlayerList(players);
+            */
+        } catch (error) {
+            console.error('Error fetching players:', error);
+            if (playerList) {
+                // Clear previous items if any, show error
+                Array.from(playerList.children).forEach(child => {
+                    if (child.id !== 'loadingIndicator') {
+                        playerList.removeChild(child);
+                    }
+                });
+                const errorLi = document.createElement('li');
+                errorLi.className = 'list-group-item text-danger text-center';
+                errorLi.textContent = 'Error loading players.';
+                playerList.appendChild(errorLi);
+            }
+            showToast('Error fetching players.', 'danger');
+        } finally {
+            if (loadingIndicator) loadingIndicator.style.display = 'none'; // Hide spinner regardless of outcome
+        }
     }
 
     // Function to populate the player list (you should have this already)
     function populatePlayerList(players) {
         if (!playerList) return;
-        playerList.innerHTML = ''; // Clear existing list
+
+        // Clear only previous player/error items, keep spinner structure if needed (though it's hidden now)
+        Array.from(playerList.children).forEach(child => {
+            if (child.id !== 'loadingIndicator') {
+                playerList.removeChild(child);
+            }
+        });
+
         if (players.length === 0) {
-            playerList.innerHTML = '<li>No players registered.</li>';
+            const noPlayersLi = document.createElement('li');
+            noPlayersLi.className = 'list-group-item text-muted text-center';
+            noPlayersLi.textContent = 'No players registered.';
+            playerList.appendChild(noPlayersLi);
             return;
         }
+
         players.forEach(player => {
             const li = document.createElement('li');
-            li.textContent = `${player.name} (Jersey: ${player.jersey_number})`; // Adjust as needed
+            li.className = 'list-group-item d-flex justify-content-between align-items-center'; // Add classes for layout
+            li.innerHTML = `
+                <span>
+                    <strong class="player-name">${escapeHTML(player.name)}</strong>
+                    ${player.jersey_number ? `<span class="text-muted ms-2">#${escapeHTML(player.jersey_number.toString())}</span>` : ''}
+                </span>
+                <button class="btn btn-sm btn-outline-secondary edit-player-btn" data-player-id="${player.id}" aria-label="Edit ${escapeHTML(player.name)}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            `; // Example structure with edit button
             playerList.appendChild(li);
         });
+
+        // Add event listeners for dynamically added edit buttons if needed
+        // document.querySelectorAll('.edit-player-btn').forEach(button => { ... });
+    }
+
+    // Helper function to escape HTML (prevent XSS)
+    function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     // Function to show toast messages (you likely have a preferred way)

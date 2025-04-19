@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#f8f8f8"> <!-- Theme color for PWA -->
     <title>Combine App</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Favicons and App Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png"> <!-- iOS Home Screen Icon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/favicon-192.png"> <!-- PWA Icon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">   <!-- Browser Tab Icon -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    <!-- Link to your custom CSS if you have one -->
-    <!-- <link href="static/style.css" rel="stylesheet"> -->
+    <link href="static/ios-style.css" rel="stylesheet">
     <style>
         /* Optional: Style for toast container */
         .toast-container {
@@ -18,12 +29,15 @@
         }
     </style>
 </head>
-<body>
+<body class="bg-body-tertiary">
 
-    <!-- Navigation Bar (Optional) -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Combine App</a>
+    <!-- iOS Style Header -->
+    <nav class="navbar navbar-expand navbar-light bg-light sticky-top border-bottom shadow-sm">
+        <div class="container-fluid justify-content-center px-0">
+            <span class="navbar-brand mb-0 h1 fw-bold mx-auto">Combine App</span>
+            <!-- Optional: Add placeholder for back/action buttons if needed later -->
+            <!-- <button class="btn btn-link text-primary position-absolute start-0 ps-3">Back</button> -->
+            <!-- <button class="btn btn-link text-primary position-absolute end-0 pe-3">Edit</button> -->
         </div>
     </nav>
 
@@ -32,12 +46,13 @@
         <!-- Toasts will appear here -->
     </div>
 
-    <div class="container mt-4">
-        <h1>Player Management</h1>
+    <div class="container-fluid pt-3 px-3 pb-5 mb-5"> <!-- Adjusted container: fluid, less padding top, more bottom padding -->
+        <!-- H1 Title Removed - redundant with header -->
+        <!-- <h1>Player Management</h1> -->
 
-        <!-- Placeholder for adding players (Adapt as needed) -->
-        <div class="mb-4 p-3 border rounded bg-light">
-            <h2>Add Player</h2>
+        <!-- Add Player Section (Card Style) -->
+        <div class="mb-4 p-3 border-0 rounded-3 bg-white shadow-sm">
+            <h2 class="fs-5 fw-semibold mb-3">Add Player</h2>
             <form id="addPlayerForm">
                  <div class="mb-3">
                     <label for="playerName" class="form-label">Player Name</label>
@@ -47,40 +62,62 @@
                     <label for="playerJersey" class="form-label">Jersey Number (Optional)</label>
                     <input type="number" class="form-control" id="playerJersey">
                 </div>
-                <button type="submit" class="btn btn-primary">Add Player</button>
+                <button type="submit" class="btn btn-ios-primary w-100">Add Player</button> <!-- Full width primary button -->
             </form>
         </div>
 
-        <!-- Player List -->
-        <div class="mb-4">
-            <h2>Registered Players</h2>
-            <ul id="playerList" class="list-group">
-                <!-- Player items will be loaded here by script.js -->
-                <li class="list-group-item">Loading...</li>
-            </ul>
+        <!-- Player List (Card Style) -->
+        <div class="mb-4 p-3 border-0 rounded-3 bg-white shadow-sm">
+             <h2 class="fs-5 fw-semibold mb-3">Registered Players</h2>
+             <ul id="playerList" class="list-group list-group-flush"> <!-- Flush list group -->
+                  <!-- Loading Spinner Placeholder -->
+                  <li class="list-group-item text-center" id="loadingIndicator">
+                      <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                      </div>
+                  </li>
+                  <!-- Player items will be loaded here -->
+             </ul>
         </div>
 
-        <!-- Placeholder for CSV Upload (Adapt as needed) -->
-        <div class="mb-5 p-3 border rounded">
-             <h2>Upload Players CSV</h2>
-             <form id="uploadCsvForm">
-                 <div class="mb-3">
-                     <label for="csvFile" class="form-label">Select CSV File</label>
-                     <input class="form-control" type="file" id="csvFile" accept=".csv" required>
+        <!-- Bulk Upload Tool (Collapsible Section - Initial Structure) -->
+        <div class="mb-4">
+            <button class="btn btn-light w-100 text-start p-3 rounded-3 shadow-sm fw-semibold d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUpload" aria-expanded="false" aria-controls="collapseUpload">
+                Bulk Upload Tool
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <div class="collapse" id="collapseUpload">
+                <div class="p-3 mt-2 border-0 rounded-3 bg-white shadow-sm">
+                    <h3 class="fs-6 mb-3">Upload Players CSV</h3>
+                    <form id="uploadCsvForm">
+                        <div class="mb-3">
+                            <label for="csvFile" class="form-label visually-hidden">Select CSV File</label>
+                            <input class="form-control" type="file" id="csvFile" accept=".csv" required>
+                        </div>
+                        <button type="submit" class="btn btn-ios-secondary w-100">Upload CSV</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Reset Data (Collapsible Section - Initial Structure) -->
+         <div class="mb-4">
+            <button class="btn btn-light w-100 text-start p-3 rounded-3 shadow-sm fw-semibold d-flex justify-content-between align-items-center text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReset" aria-expanded="false" aria-controls="collapseReset">
+                 <i class="bi bi-trash me-2"></i> Reset All Players
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <div class="collapse" id="collapseReset">
+                <div class="p-3 mt-2 border-0 rounded-3 bg-white shadow-sm text-center">
+                     <p class="text-muted mb-3">This will permanently delete all player data.</p>
+                     <button id="resetPlayersBtn" class="btn btn-ios-danger w-100">
+                         Reset All Players
+                     </button>
                  </div>
-                 <button type="submit" class="btn btn-secondary">Upload CSV</button>
-             </form>
+             </div>
          </div>
 
     </div> <!-- End Main Container -->
-
-    <!-- Reset Section and Modals (Keep at the very bottom) -->
-    <div class="container mt-5 pt-4 border-top">
-        <h4 class="text-muted">Danger Zone</h4>
-        <button id="resetPlayersBtn" class="btn btn-sm btn-outline-danger">
-            <i class="bi bi-trash"></i> Reset All Players
-        </button>
-    </div>
 
     <!-- Reset Confirmation Modal 1 -->
     <div class="modal fade" id="resetConfirmationModal" tabindex="-1" aria-labelledby="resetConfirmationModalLabel" aria-hidden="true">
@@ -94,8 +131,8 @@
                     This action will permanently delete all players from the database. This cannot be undone. Are you sure you want to continue?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmResetStep1">✅ Yes, Continue</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">❌ Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmResetStep1">✅ Yes, Continue</button>
                 </div>
             </div>
         </div>
@@ -114,8 +151,8 @@
                     <input type="text" class="form-control" id="resetConfirmText" placeholder="Type REMOVE here">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmResetStep2" disabled>Confirm and Reset All Players</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">❌ Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmResetStep2" disabled>Confirm and Reset All Players</button>
                 </div>
             </div>
         </div>

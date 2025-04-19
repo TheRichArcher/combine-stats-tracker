@@ -1,0 +1,201 @@
+/* static/ios-style.css */
+
+:root {
+  --ios-blue: #007AFF;
+  --ios-red: #FF3B30;
+  --ios-gray: #f2f2f7; /* Light gray background often used in iOS */
+  --ios-border-color: rgba(0, 0, 0, 0.1); /* Subtle border color */
+  --ios-min-touch-target: 44px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--ios-gray); /* Use light gray background */
+  padding-top: constant(safe-area-inset-top); /* iOS Safe Area */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: constant(safe-area-inset-bottom); /* iOS Safe Area */
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh; /* Ensure body takes full viewport height */
+  -webkit-font-smoothing: antialiased; /* Smoother fonts on WebKit */
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Header Adjustments --- */
+.navbar {
+  background-color: #f8f8f8 !important; /* iOS-like light gray header */
+  border-bottom: 1px solid var(--ios-border-color);
+  min-height: var(--ios-min-touch-target); /* Ensure header is tappable */
+  padding-top: constant(safe-area-inset-top); /* Adjust padding for safe area */
+  padding-top: env(safe-area-inset-top);
+}
+
+.navbar-brand {
+    font-size: 17px; /* Common iOS Title Size */
+}
+
+
+/* --- Container & Card Styling --- */
+.container-fluid {
+  padding-left: 16px; /* Standard iOS padding */
+  padding-right: 16px;
+}
+
+/* Override default Bootstrap card styles for iOS look */
+.rounded-3 { /* Targetting the cards we used in HTML */
+  border-radius: 10px !important; /* iOS style rounded corners */
+  border: none !important; /* Remove Bootstrap borders */
+  background-color: white !important; /* Ensure white background */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important; /* More subtle shadow */
+}
+
+/* --- Button Styling --- */
+.btn {
+  border-radius: 10px !important; /* Less round than full pill, more iOS-like */
+  font-weight: 600 !important; /* Semibold */
+  padding: 10px 20px !important; /* Generous padding */
+  min-height: var(--ios-min-touch-target) !important; /* Minimum touch target size */
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, transform 0.1s ease-out !important; /* Added transform transition */
+  border: none; /* Remove default bootstrap borders generally */
+  font-size: 17px; /* Standard iOS button text size */
+}
+
+/* Add subtle scale down effect on button press */
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-ios-primary {
+  background-color: var(--ios-blue) !important;
+  color: white !important;
+  border: none;
+}
+.btn-ios-primary:hover, .btn-ios-primary:focus, .btn-ios-primary:active {
+  background-color: #005ecb !important; /* Darker blue for interaction */
+  color: white !important;
+}
+
+.btn-ios-secondary {
+  background-color: #e5e5ea !important; /* iOS secondary button gray */
+  color: var(--ios-blue) !important;
+  border: none;
+}
+.btn-ios-secondary:hover, .btn-ios-secondary:focus, .btn-ios-secondary:active {
+  background-color: #d8d8dd !important;
+  color: var(--ios-blue) !important;
+}
+
+.btn-ios-danger {
+  background-color: var(--ios-red) !important;
+  color: white !important;
+  border: none;
+}
+.btn-ios-danger:hover, .btn-ios-danger:focus, .btn-ios-danger:active {
+  background-color: #d32f2f !important; /* Darker red */
+  color: white !important;
+}
+
+/* --- Form Control Styling --- */
+.form-control, .form-select {
+  min-height: var(--ios-min-touch-target) !important;
+  border-radius: 8px !important; /* Slightly less rounded than buttons */
+  border: 1px solid #ced4da; /* Keep a subtle border */
+  padding: 10px 12px !important;
+  font-size: 16px; /* Standard iOS input text size */
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 0.1rem rgba(0, 122, 255, 0.25); /* Subtle blue focus ring */
+}
+
+/* --- List Group Styling (for Player List) --- */
+.list-group-item {
+  border-left: none !important;
+  border-right: none !important;
+  border-top-width: 0.5px !important; /* Thinner iOS separators */
+  border-bottom-width: 0.5px !important;
+  border-color: var(--ios-border-color) !important;
+  padding: 12px 0px !important; /* iOS list item padding (no horizontal padding needed with flush) */
+  font-size: 17px;
+}
+
+/* Center the loading spinner within its list item */
+#loadingIndicator {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none !important; /* Remove borders from the loading item */
+}
+
+.list-group-item:first-child {
+    border-top: none !important; /* No top border on first item */
+}
+.list-group-item:last-child {
+  border-bottom: none !important; /* No bottom border on last item */
+}
+
+/* --- Collapsible Toggle Buttons --- */
+.btn[data-bs-toggle="collapse"] {
+  background-color: white !important;
+  color: black !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+  border-radius: 10px !important;
+  font-weight: normal !important; /* Standard weight for list-like items */
+}
+.btn[data-bs-toggle="collapse"][aria-expanded="true"] i.bi-chevron-down {
+    transform: rotate(180deg);
+}
+.btn[data-bs-toggle="collapse"] i {
+    transition: transform 0.2s ease-in-out;
+    color: #8e8e93; /* iOS chevron color */
+}
+
+/* Style the collapsed content area */
+.collapse + .collapse.show > div, /* Target the inner div when shown */
+.collapse.show > div { /* Target the inner div when shown */
+    margin-top: 8px !important; /* Add spacing between toggle button and content */
+}
+
+/* --- Modal Button Styling --- */
+/* Override the specific modal footer buttons from HTML with iOS styles */
+.modal-footer .btn-secondary {
+    background-color: #e5e5ea !important; /* iOS secondary button gray */
+    color: var(--ios-blue) !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    min-height: var(--ios-min-touch-target) !important;
+    border: none;
+}
+.modal-footer .btn-secondary:hover,
+.modal-footer .btn-secondary:focus,
+.modal-footer .btn-secondary:active {
+    background-color: #d8d8dd !important;
+    color: var(--ios-blue) !important;
+}
+
+.modal-footer .btn-danger {
+    background-color: var(--ios-red) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    min-height: var(--ios-min-touch-target) !important;
+    border: none;
+}
+.modal-footer .btn-danger:hover,
+.modal-footer .btn-danger:focus,
+.modal-footer .btn-danger:active {
+    background-color: #d32f2f !important; /* Darker red */
+    color: white !important;
+}
+
+/* Specific adjustments for the destructive action confirmation input */
+#resetConfirmText {
+    text-transform: uppercase; /* Hint that uppercase is needed */
+}
+
+/* --- Utility --- */
+.w-100 { width: 100% !important; } /* Ensure width utilities work */ 
