@@ -71,6 +71,12 @@ function App() {
   // --- Export State ---
   const [exportFormat, setExportFormat] = useState('csv'); // 'csv' or 'pdf'
 
+  // --- NEW: Reset Players State ---
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetConfirmationText, setResetConfirmationText] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+
   // --- Effects for Auto-clearing CSV Messages ---
   useEffect(() => {
     let summaryTimer;
@@ -93,6 +99,58 @@ function App() {
     // Cleanup function to clear the timeout if error changes or component unmounts
     return () => clearTimeout(errorTimer);
   }, [uploadError]); // Re-run effect only when uploadError changes
+
+  // --- NEW: Reset Players Handlers ---
+  const openResetModal = () => {
+    setResetConfirmationText(''); // Clear any previous input
+    setResetError(''); // Clear any previous error
+    setIsResetModalOpen(true);
+  };
+
+  const closeResetModal = () => {
+    setIsResetModalOpen(false);
+    setResetConfirmationText('');
+    setResetError('');
+  };
+
+  const handleResetConfirm = async () => {
+    if (resetConfirmationText !== 'REMOVE') {
+      setResetError('Please type REMOVE exactly to confirm.');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetError('');
+
+    try {
+      // TODO: Add authentication headers if/when implemented
+      // const headers = { 'Authorization': `Bearer ${your_jwt_token}` };
+      const response = await fetch(`${API_BASE_URL}/players/reset`, {
+        method: 'DELETE',
+        // headers: headers, // Add headers here when auth is ready
+      });
+
+      const result = await response.json(); // Attempt to parse JSON even on error
+
+      if (!response.ok) {
+        // Use HttpError or a similar pattern if available, otherwise throw standard Error
+        throw new Error(result.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      alert('✅ All players and drill results have been successfully deleted.'); // Simple feedback
+      closeResetModal();
+      fetchPlayers(); // Refresh the player list
+
+    } catch (error) {
+      console.error('Error resetting players:', error);
+      // Display error within the modal for context
+      setResetError(`Reset failed: ${error.message}`);
+      // alert(`❌ Error resetting players: ${error.message}`); // Alternative: Use alert
+    } finally {
+      setIsResetting(false);
+    }
+  };
+  // --- End NEW Reset Handlers ---
 
   // --- Player Form Handlers ---
   const handleFileChange = (event) => {
@@ -835,6 +893,59 @@ function App() {
             </div>
         )}
       </div>
+
+      {/* --- NEW: Admin Section --- */}
+      <section className="admin-section">
+        <h4>Admin Tools</h4>
+        <p>Warning: These actions are permanent and cannot be undone.</p>
+        <button
+          onClick={openResetModal}
+          className="button button-danger button-small"
+          disabled={isResetting} // Disable while reset is in progress
+        >
+          {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
+        </button>
+      </section>
+      {/* --- End Admin Section --- */}
+
+      {/* --- NEW: Reset Confirmation Modal --- */}
+      {isResetModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Confirm Reset</h2>
+            <p><strong>Warning:</strong> This action will permanently delete <strong>all players</strong> and <strong>all associated drill results</strong> from the system.</p>
+            <p>This cannot be undone.</p>
+            <p>To proceed, please type <strong>REMOVE</strong> in the box below:</p>
+            <input
+              type="text"
+              value={resetConfirmationText}
+              onChange={(e) => {
+                  setResetConfirmationText(e.target.value);
+                  // Clear error as user types
+                  if (resetError) setResetError(''); 
+              }}
+              placeholder="Type REMOVE here"
+              className={resetError && resetConfirmationText !== 'REMOVE' ? 'input-error' : ''}
+            />
+            {/* Display error message inside modal */}
+            {resetError && <p className="modal-error">{resetError}</p>}
+            
+            <div className="modal-actions">
+              <button onClick={closeResetModal} className="button" disabled={isResetting}>
+                Cancel
+              </button>
+              <button
+                onClick={handleResetConfirm}
+                className="button button-danger"
+                disabled={resetConfirmationText !== 'REMOVE' || isResetting}
+              >
+                {isResetting ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- End Reset Confirmation Modal --- */}
 
     </div>
   );
