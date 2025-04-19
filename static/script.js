@@ -11,6 +11,9 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// --- Base URL for the Backend API ---
+const API_BASE_URL = 'https://combine-stats-tracker.onrender.com';
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elements ---
     const resetPlayersBtn = document.getElementById('resetPlayersBtn');
@@ -69,7 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to reset all players
     async function resetAllPlayers() {
         try {
-            const response = await fetch('/players/reset', {
+            // Use full URL for fetch
+            const response = await fetch(`${API_BASE_URL}/players/reset`, {
                 method: 'DELETE',
             });
 
@@ -109,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Replace with your actual fetch logic:
         try {
-            // Uncomment and use your actual fetch
-            const response = await fetch('/players');
+            // Use full URL for fetch
+            const response = await fetch(`${API_BASE_URL}/players`);
             if (!response.ok) {
                 // Attempt to get more specific error info if possible
                 let errorDetail = `HTTP error! status: ${response.status}`;
