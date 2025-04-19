@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to reset all players
     async function resetAllPlayers() {
         try {
-            // Use full URL for fetch
+            // Use full URL for fetch, ensure NO trailing slash
             const response = await fetch(`${API_BASE_URL}/players/reset`, {
                 method: 'DELETE',
             });
@@ -115,8 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Replace with your actual fetch logic:
         try {
-            // Use full URL for fetch
-            const response = await fetch(`${API_BASE_URL}/players`);
+            // Use full URL for fetch, ensure WITH trailing slash
+            const response = await fetch(`${API_BASE_URL}/players/`);
             if (!response.ok) {
                 // Attempt to get more specific error info if possible
                 let errorDetail = `HTTP error! status: ${response.status}`;

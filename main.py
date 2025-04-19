@@ -83,7 +83,7 @@ async def read_root(request: Request):
 
 # --- Player Routes ---
 
-@app.get("/players")
+@app.get("/players/")
 async def get_players(db: Session = Depends(get_db)):
     """Gets a list of all players."""
     players = db.query(models.Player).all()
