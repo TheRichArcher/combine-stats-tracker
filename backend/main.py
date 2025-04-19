@@ -67,7 +67,10 @@ app = FastAPI(lifespan=lifespan)
 # IMPORTANT: Update origins with your deployed frontend URL
 # You can use "*" for development, but be specific in production
 origins = [
-    "https://combine-stats-tracker-frontend.onrender.com"
+    "https://combine-stats-tracker-frontend.onrender.com", # Keep existing Render URL
+    "https://woo-combine.com", # Add the primary domain
+    "http://localhost:5173", # Keep for local development if needed
+    "http://127.0.0.1:5173" # Keep for local development if needed
 ]
 
 app.add_middleware(
