@@ -79,6 +79,8 @@ function App() {
 
   // --- NEW: Admin Section Visibility State ---
   const [isAdminSectionVisible, setIsAdminSectionVisible] = useState(false);
+  // --- NEW: Reset Tool Visibility State (within Admin section) ---
+  const [showResetTool, setShowResetTool] = useState(false);
 
   // --- Effects for Auto-clearing CSV Messages ---
   useEffect(() => {
@@ -905,18 +907,30 @@ function App() {
             </div>
             {/* --- End MOVED CSV Upload Section --- */}
 
-            {/* --- MOVED: Player Reset Section --- */}
-            <section className="admin-section" style={{marginTop: '20px'}}> {/* Keep original styling */} 
-              <h4>Reset Data</h4>
-              <p>Warning: This action is permanent and cannot be undone.</p>
-              <button
-                onClick={openResetModal}
-                className="button button-danger button-small" // Keep existing danger/small style
-                disabled={isResetting}
+            {/* --- MOVED: Player Reset Section (Now Collapsible) --- */}
+            <div style={{ marginTop: '20px' }}> {/* Container for the reset toggle and section */} 
+              <button 
+                onClick={() => setShowResetTool(!showResetTool)}
+                className="button-link-style" // Use link style for low emphasis
+                style={{ marginBottom: '10px' }}
               >
-                {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
+                {showResetTool ? 'Hide Reset Tool ▲' : 'Show Reset Tool ▼'}
               </button>
-            </section>
+
+              {showResetTool && (
+                <section className="admin-section" style={{marginTop: '5px'}}> {/* Keep original styling, reduce top margin */} 
+                  <h4>Reset Data</h4>
+                  <p>Warning: This action is permanent and cannot be undone.</p>
+                  <button
+                    onClick={openResetModal}
+                    className="button button-danger button-small" // Keep existing danger/small style
+                    disabled={isResetting}
+                  >
+                    {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
+                  </button>
+                </section>
+              )}
+            </div>
             {/* --- End MOVED Player Reset Section --- */}
           </div>
         )}
