@@ -17,26 +17,20 @@ if not os.path.exists('./test.db'):
 
 app = FastAPI(title="Combine App API")
 
-# --- CORS Middleware --- NEW
-# Define the origins allowed to access the API
-# In production, restrict this to your actual frontend domain
+# --- CORS Middleware --- UPDATED
 origins = [
-    "https://woo-combine-frontend.onrender.com",
     "https://woo-combine.com",
-    # Add other origins like localhost for development if needed
-    # "http://localhost:8000", # Example for local FastAPI testing
-    # "http://localhost:3000", # Example for local React dev server
+    "https://www.woo-combine.com",
+    "https://woo-combine-frontend.onrender.com",
+    "http://localhost:5173"  # <-- for local Vite testing
 ]
-
-# SECOND TEMPORARY TEST: Allow all origins
-# origins = ["*"] # REMOVED - Incompatible with allow_credentials=True
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Use specific origins list
-    allow_credentials=True, # ENABLED for potential cookie/auth header use
-    allow_methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], # Allow relevant methods
-    allow_headers=["*"], # Allow all headers
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Database Dependency ---
