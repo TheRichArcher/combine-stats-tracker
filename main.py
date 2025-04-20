@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse # Keep FileResponse if used elsewhere, remove if not
+# from fastapi.staticfiles import StaticFiles # REMOVED
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # Assuming database.py and models.py are in the same directory or accessible
 import models
 import database # Contains get_db function (or equivalent) and init_db
-import os
 
 # Initialize DB if needed (similar to Flask setup)
 if not os.path.exists('./test.db'):
@@ -34,7 +33,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins, # Use specific origins list
-    allow_credentials=True,
+    # allow_credentials=True, # REMOVED (unless cookies are strictly needed for API)
     allow_methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], # Allow relevant methods
     allow_headers=["*"], # Allow all headers
 )
@@ -69,16 +68,34 @@ async def get_current_admin_user(request: Request):
     # --- End Placeholder ---
 
 
-# --- Static Files & Templates (If serving index.html from FastAPI) ---
-# If React handles routing, you might not need Jinja2Templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory=".") # Serve index.html from root
-
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    """Serves the main HTML page (likely handled by React router in production)."""
-    return templates.TemplateResponse("index.html", {"request": request})
-
+# --- Static Files & Frontend Serving --- # REMOVED SECTION
+# # Mount the 'assets' directory from the React build output
+# app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
+#
+# # Serve the main index.html for the root path and any other non-API, non-asset paths
+# @app.get("/{full_path:path}", response_class=HTMLResponse)
+# async def serve_react_app(request: Request, full_path: str):
+#     index_path = os.path.join("frontend", "dist", "index.html")
+#     if not os.path.exists(index_path):
+#         raise HTTPException(status_code=404, detail="Index.html not found")
+#
+#     # Check if the path looks like an API call or a static file request handled elsewhere
+#     # This is a basic check; adjust if needed based on your API structure
+#     if full_path.startswith("api/") or full_path.startswith("players") or full_path.startswith("static/") or full_path.startswith("assets/"):
+#         # Let other routes or static files handle it, or return 404 if not found by them
+#         # This part might need refinement depending on how FastAPI handles overlapping routes/mounts
+#         # For now, we assume specific API routes are defined above and StaticFiles handles /assets
+#         # If no specific route matches, FastAPI should 404 implicitly.
+#         # If the request reaches here and it's an API-like path, it means no specific route caught it.
+#         print(f"Path '{full_path}' seems like API/asset but wasn't caught, returning 404.")
+#         # Returning index.html here could mask errors, so let's return 404 or let FastAPI handle it.
+#         # For simplicity in this example, we might let it fall through to serving index.html,
+#         # but a production setup might need more robust routing logic.
+#         # Let's try explicitly returning 404 for unhandled API-like paths.
+#         raise HTTPException(status_code=404, detail="API route or static asset not found")
+#
+#     print(f"Serving index.html for path: {full_path}")
+#     return FileResponse(index_path)
 
 # --- Player Routes ---
 
