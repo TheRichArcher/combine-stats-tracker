@@ -22,7 +22,7 @@ const DRILL_TYPES = {
 };
 
 // Add this line at the top, outside the App function
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = "https://combine-stats-tracker.onrender.com";
 
 function App() {
   // --- Player Form State ---
