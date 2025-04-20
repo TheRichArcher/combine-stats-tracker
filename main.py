@@ -21,6 +21,7 @@ app = FastAPI(title="Combine App API")
 # Define the origins allowed to access the API
 # In production, restrict this to your actual frontend domain
 origins = [
+    "https://woo-combine-frontend.onrender.com",
     "https://woo-combine.com",
     # Add other origins like localhost for development if needed
     # "http://localhost:8000", # Example for local FastAPI testing
@@ -33,7 +34,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins, # Use specific origins list
-    # allow_credentials=True, # REMOVED (unless cookies are strictly needed for API)
+    allow_credentials=True, # ENABLED for potential cookie/auth header use
     allow_methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], # Allow relevant methods
     allow_headers=["*"], # Allow all headers
 )
