@@ -155,6 +155,15 @@ async def reset_players(
         #     detail=f"Database error during reset: {e}"
         # )
 
+# +++ DEBUGGING: Add simple healthcheck route +++
+@app.get("/healthcheck")
+async def health_check():
+    print("+++ DEBUG: /healthcheck endpoint reached +++")
+    return {"status": "ok"}
+# +++ END DEBUGGING +++
+
+# --- Player Routes ---
+
 # --- Optional: Run with Uvicorn ---
 # if __name__ == "__main__":
 #     import uvicorn
