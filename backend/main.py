@@ -24,6 +24,7 @@ from sqlalchemy import Enum as SqlEnum # Import sqlalchemy Enum
 from sqlalchemy import Date # Import Date type for birthdate
 import csv # Added for CSV parsing
 import asyncio # Added for dummy sleep
+from fastapi.responses import JSONResponse
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -449,7 +450,7 @@ async def read_rankings(
     for i, player_data in enumerate(player_scores):
         # Handle ties: if the score is the same as the previous player, assign the same rank
         if i > 0 and player_data['composite_score'] == player_scores[i-1]['composite_score']:
-            rank_to_assign = ranked_players[-1]['rank'] # Assign same rank as previous
+            rank_to_assign = ranked_players[-1].rank # FIX: Use dot notation for Pydantic model attribute
         else:
             rank_to_assign = current_rank
         
@@ -458,6 +459,26 @@ async def read_rankings(
         current_rank += 1
 
     return ranked_players
+
+# +++ DEBUGGING: Add simple healthcheck route +++
+@app.get("/healthcheck")
+async def health_check():
+    print("+++ DEBUG: /healthcheck endpoint reached +++")
+    return {"status": "ok"}
+# +++ END DEBUGGING +++
+
+# +++ DEBUGGING: Add simplified reset route +++
+@app.delete("/admin/reset")
+async def reset_players(
+    # db: AsyncSession = Depends(get_session) # Keep DB logic commented for now
+):
+    """Deletes all players and their associated drill results (Admin Only)."""
+    print("--- DEBUG: reset_players function entered (NO DB) ---")
+    return JSONResponse(
+        content={"status": "success", "deleted_count": "DEBUG - NO DB"},
+        status_code=200 # Use standard HTTP status code
+    )
+# +++ END DEBUGGING +++
 
 # New: Export rankings endpoint
 @app.get("/rankings/export")
