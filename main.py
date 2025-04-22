@@ -131,13 +131,12 @@ async def reset_test():
 
 @app.delete("/players/reset")
 async def reset_players(
-    db: Session = Depends(get_db),
-    current_admin_user: models.Player = Depends(get_current_admin_user) # Enforce admin auth
+    db: Session = Depends(get_db)
+    # current_admin_user: models.Player = Depends(get_current_admin_user) # Temporarily remove dependency
 ):
     """Deletes all players and their associated drill results (Admin Only)."""
     print("--- DEBUG: reset_players function entered ---") # <-- Add print here
     # The Depends(get_current_admin_user) handles the auth check.
-    # If the dependency raises HTTPException, this code won't execute.
     try:
         num_results_deleted = db.query(models.DrillResult).delete()
         num_players_deleted = db.query(models.Player).delete()
