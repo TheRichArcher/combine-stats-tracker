@@ -131,29 +131,29 @@ async def reset_test():
 
 @app.delete("/players/reset")
 async def reset_players(
-    db: Session = Depends(get_db)
+    # db: Session = Depends(get_db) # Temporarily remove dependency
     # current_admin_user: models.Player = Depends(get_current_admin_user) # Temporarily remove dependency
 ):
     """Deletes all players and their associated drill results (Admin Only)."""
-    print("--- DEBUG: reset_players function entered ---") # <-- Add print here
+    print("--- DEBUG: reset_players function entered (NO DB) ---") # <-- Add print here
     # The Depends(get_current_admin_user) handles the auth check.
-    try:
-        num_results_deleted = db.query(models.DrillResult).delete()
-        num_players_deleted = db.query(models.Player).delete()
-        db.commit()
-        print(f"ADMIN ACTION: Deleted {num_players_deleted} players and {num_results_deleted} drill results.")
-        return JSONResponse(
-            content={"status": "success", "deleted_count": num_players_deleted},
-            status_code=status.HTTP_200_OK
-        )
-    except Exception as e:
-        db.rollback()
+    # try:
+        # num_results_deleted = db.query(models.DrillResult).delete()
+        # num_players_deleted = db.query(models.Player).delete()
+        # db.commit()
+        # print(f"ADMIN ACTION: Deleted {num_players_deleted} players and {num_results_deleted} drill results.")
+    return JSONResponse(
+        content={"status": "success", "deleted_count": "DEBUG - NO DB"},
+        status_code=status.HTTP_200_OK
+    )
+    # except Exception as e:
+        # db.rollback()
         # Log the exception e
-        print(f"Error resetting players: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database error during reset: {e}"
-        )
+        # print(f"Error resetting players: {e}")
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail=f"Database error during reset: {e}"
+        # )
 
 # --- Optional: Run with Uvicorn ---
 # if __name__ == "__main__":
