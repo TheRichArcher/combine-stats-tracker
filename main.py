@@ -121,12 +121,21 @@ async def add_player(player_data: dict, db: Session = Depends(get_db)): # Use Py
 
 
 # --- ADDED: Player Reset Endpoint (FastAPI) ---
+
+# +++ DEBUGGING +++
+@app.get("/players/reset/test")
+async def reset_test():
+    print("+++ DEBUG: GET /players/reset/test endpoint reached +++")
+    return {"message": "Reset test endpoint reached successfully!"}
+# +++ END DEBUGGING +++
+
 @app.delete("/players/reset")
 async def reset_players(
     db: Session = Depends(get_db),
     current_admin_user: models.Player = Depends(get_current_admin_user) # Enforce admin auth
 ):
     """Deletes all players and their associated drill results (Admin Only)."""
+    print("--- DEBUG: reset_players function entered ---") # <-- Add print here
     # The Depends(get_current_admin_user) handles the auth check.
     # If the dependency raises HTTPException, this code won't execute.
     try:
