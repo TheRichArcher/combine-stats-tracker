@@ -123,13 +123,13 @@ async def add_player(player_data: dict, db: Session = Depends(get_db)): # Use Py
 # --- ADDED: Player Reset Endpoint (FastAPI) ---
 
 # +++ DEBUGGING +++
-@app.get("/players/reset/test")
+@app.get("/admin/reset/test")
 async def reset_test():
-    print("+++ DEBUG: GET /players/reset/test endpoint reached +++")
+    print("+++ DEBUG: GET /admin/reset/test endpoint reached +++")
     return {"message": "Reset test endpoint reached successfully!"}
 # +++ END DEBUGGING +++
 
-@app.delete("/players/reset")
+@app.delete("/admin/reset")
 async def reset_players(
     # db: Session = Depends(get_db) # Temporarily remove dependency
     # current_admin_user: models.Player = Depends(get_current_admin_user) # Temporarily remove dependency

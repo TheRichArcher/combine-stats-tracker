@@ -130,7 +130,7 @@ function App() {
     try {
       // TODO: Add authentication headers if/when implemented
       // const headers = { 'Authorization': `Bearer ${your_jwt_token}` };
-      const response = await fetch(`${API_BASE_URL}/players/reset`, {
+      const response = await fetch(`${API_BASE_URL}/admin/reset`, {
         method: 'DELETE',
         // headers: headers, // Add headers here when auth is ready
       });
