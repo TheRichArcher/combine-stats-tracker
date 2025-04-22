@@ -11,7 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Body, Query
-from sqlmodel import Field, SQLModel, create_engine, Session, select, Column
+from sqlmodel import Field, SQLModel, create_engine, Session, select, Column, delete
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from contextlib import asynccontextmanager
@@ -470,14 +470,37 @@ async def health_check():
 # +++ DEBUGGING: Add simplified reset route +++
 @app.delete("/admin/reset")
 async def reset_players(
-    # db: AsyncSession = Depends(get_session) # Keep DB logic commented for now
+    session: AsyncSession = Depends(get_session) # <-- Uncomment DB session dependency
 ):
     """Deletes all players and their associated drill results (Admin Only)."""
-    print("--- DEBUG: reset_players function entered (NO DB) ---")
-    return JSONResponse(
-        content={"status": "success", "deleted_count": "DEBUG - NO DB"},
-        status_code=200 # Use standard HTTP status code
-    )
+    print("--- DEBUG: reset_players function entered - Attempting DB delete ---")
+    try:
+        # Note: SQLModel doesn't directly support bulk delete on the model itself easily with async.
+        # We use SQLAlchemy core delete statements.
+        # Import delete if not already imported
+        from sqlmodel import delete
+
+        # Delete Drill Results first due to foreign key constraint
+        delete_results_stmt = delete(DrillResult)
+        result_results = await session.execute(delete_results_stmt)
+        deleted_results_count = result_results.rowcount
+
+        # Delete Players
+        delete_players_stmt = delete(Player)
+        result_players = await session.execute(delete_players_stmt)
+        deleted_players_count = result_players.rowcount
+        
+        await session.commit()
+        print(f"ADMIN ACTION: Deleted {deleted_players_count} players and {deleted_results_count} drill results.")
+        return JSONResponse(
+            content={"status": "success", "deleted_players": deleted_players_count, "deleted_results": deleted_results_count},
+            status_code=200
+        )
+    except Exception as e:
+        await session.rollback()
+        print(f"Error resetting players: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error during reset: {e}")
+
 # +++ END DEBUGGING +++
 
 # New: Export rankings endpoint
