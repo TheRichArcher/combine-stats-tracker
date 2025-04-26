@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -21,7 +21,8 @@ class DrillResult(Base):
     id = Column(Integer, primary_key=True)
     player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
     drill_name = Column(String(100), nullable=False) # Example field
-    score = Column(Integer) # Example field
+    raw_score = Column(String) # Store the original score format (e.g., "5.12 sec", "7/10")
+    normalized_score = Column(Integer, nullable=True) # Renamed from score, store 0-100 scale
 
     player = relationship("Player", back_populates="drill_results")
 

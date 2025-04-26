@@ -120,35 +120,38 @@ DEFAULT_DRILL_WEIGHTS: Dict[DrillType, float] = {
 }
 
 # --- Normalization Function ---
-def calculate_normalized_score(drill_type: DrillType, raw_score: float) -> float:
+def calculate_normalized_score(drill_type: DrillType, raw_score: str) -> int:
     """Calculates a normalized score (0-100) based on the drill type and raw score."""
-    score = float(raw_score) # Ensure score is float
+    try:
+        # TODO: Implement robust parsing for different raw_score formats (e.g., "7/10", "5.12 sec")
+        # For now, assume it can be directly converted to float after removing potential text (like " sec")
+        score_str = raw_score.split()[0] # Basic attempt to get the number part
+        score = float(score_str)
+    except ValueError:
+        print(f"Warning: Could not parse raw_score '{raw_score}' to float for drill type {drill_type}. Returning 0.")
+        return 0 # Cannot calculate if parsing fails
+
     normalized_score = 0.0
 
     if drill_type in LOWER_IS_BETTER_DRILLS:
         config = LOWER_IS_BETTER_DRILLS[drill_type]
         min_val, max_val = config["min"], config["max"]
-        if max_val == min_val: return 100.0 # Avoid division by zero if min/max are same
-        # Clamp score within bounds
+        if max_val == min_val: return 100 # Return int
         clamped_score = max(min_val, min(score, max_val))
-        # Calculate normalized score (higher is better)
         normalized_score = 100 * (max_val - clamped_score) / (max_val - min_val)
 
     elif drill_type in HIGHER_IS_BETTER_DRILLS:
         config = HIGHER_IS_BETTER_DRILLS[drill_type]
         min_val, max_val = config["min"], config["max"]
-        if max_val == min_val: return 100.0 # Avoid division by zero
-        # Clamp score within bounds
+        if max_val == min_val: return 100 # Return int
         clamped_score = max(min_val, min(score, max_val))
-        # Calculate normalized score
         normalized_score = 100 * (clamped_score - min_val) / (max_val - min_val)
     else:
-        # Handle unknown drill types if necessary (e.g., return 0 or raise error)
         print(f"Warning: Normalization config not found for drill type: {drill_type}")
-        return 0.0 # Default to 0 if config missing
+        return 0 # Return int
 
-    # Return rounded score to avoid excessive decimals
-    return round(normalized_score, 2)
+    # Return rounded integer score
+    return int(round(normalized_score)) # Cast to int
 
 # --- Helper Functions ---
 
@@ -187,8 +190,8 @@ async def calculate_composite_score(
     player_id: int,
     session: AsyncSession,
     weights: Dict[DrillType, float] = DEFAULT_DRILL_WEIGHTS
-) -> tuple[float, Dict[DrillType, float]]:
-    """Fetches normalized scores, calculates composite score, returns score and best normalized scores."""
+) -> tuple[float, Dict[DrillType, int], Dict[DrillType, str]]:
+    """Fetches normalized scores, calculates composite score, returns score, best normalized scores, and best raw scores."""
     # Fetch all drill results for the player
     result = await session.execute(
         select(DrillResult).where(DrillResult.player_id == player_id)
@@ -198,28 +201,27 @@ async def calculate_composite_score(
     total_score = 0.0
     total_weight_applied = 0.0
 
-    best_scores: Dict[DrillType, float] = {}
+    best_scores: Dict[DrillType, int] = {}
+    best_raw_scores: Dict[DrillType, str] = {} # Dictionary to store best raw scores
     for res in drill_results:
         if res.normalized_score is not None:
             # Only consider the best score if multiple attempts exist for the same drill
             if res.drill_type not in best_scores or res.normalized_score > best_scores[res.drill_type]:
                  best_scores[res.drill_type] = res.normalized_score
+                 best_raw_scores[res.drill_type] = res.raw_score # Store corresponding raw score
 
-    # Calculate weighted score based on best scores
+    # Calculate weighted score based on best normalized scores
     for drill_type, norm_score in best_scores.items():
-        weight = weights.get(drill_type, 0) # Default to 0 weight if not defined
+        weight = weights.get(drill_type, 0)
         total_score += norm_score * weight
         total_weight_applied += weight
 
-    # Optional: Normalize the final score based on the total weight applied
-    # This handles cases where a player might not have scores for all weighted drills.
-    # If total_weight_applied is 0, score remains 0.
     if total_weight_applied > 0:
-        composite_score = (total_score / total_weight_applied) 
+        composite_score = (total_score / total_weight_applied)
     else:
         composite_score = 0.0
-        
-    return round(composite_score, 2), best_scores
+
+    return round(composite_score, 2), best_scores, best_raw_scores # Return raw scores too
 
 # --- Models ---
 # Define the allowed age group literals
@@ -246,25 +248,26 @@ class PlayerRead(PlayerBase): # Inherits name, age_group (which is now Enum)
 
 # Updated DrillResult Models
 class DrillResultBase(SQLModel):
-    player_id: int = Field(foreign_key="player.id") # Keep player_id for FK relationship
+    player_id: int = Field(foreign_key="player.id")
     drill_type: DrillType
-    raw_score: float
-    normalized_score: Optional[float] = Field(default=None)
+    raw_score: str
+    normalized_score: Optional[int] = Field(default=None)
 
 class DrillResult(DrillResultBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
-class DrillResultCreate(SQLModel): # No longer inherits Base, define fields explicitly
-    player_number: int # Renamed from player_id for clarity on input
+class DrillResultCreate(SQLModel):
+    player_number: int
     drill_type: DrillType
-    raw_score: float
-    # Exclude normalized_score from create payload, it will be calculated
+    raw_score: str
+    # Exclude normalized_score from create payload
+
     model_config = {
         "json_schema_extra": {
             "example": {
-                "player_number": 1400, # Use number in example
+                "player_number": 1400,
                 "drill_type": "40m_dash",
-                "raw_score": 5.5
+                "raw_score": "5.12 sec"
             }
         }
     }
@@ -335,30 +338,28 @@ async def create_player(
 # Updated Drill Result Endpoint
 @app.post("/drill-results/", response_model=DrillResultRead)
 async def create_drill_result(
-    drill_result: DrillResultCreate, # Use updated create model
+    drill_result: DrillResultCreate,
     session: AsyncSession = Depends(get_session)
 ):
     # Find player by their number
     player_result = await session.execute(
         select(Player).where(Player.number == drill_result.player_number)
     )
-    player = player_result.scalar_one_or_none() # Use scalar_one_or_none
+    player = player_result.scalar_one_or_none()
 
     if not player:
-        # Use player_number in the error message
         raise HTTPException(status_code=404, detail=f"Player with number {drill_result.player_number} not found")
 
     print(f"Found player: {player} based on number {drill_result.player_number}")
     print(f"Received drill result data: {drill_result}")
 
-    # Calculate normalized score
+    # Calculate normalized score (now accepts str, returns int)
     normalized_score = calculate_normalized_score(drill_result.drill_type, drill_result.raw_score)
     print(f"Calculated normalized score: {normalized_score}")
 
-    # Create the database model instance
-    # Use the found player's actual ID for the foreign key
+    # Create the database model instance (raw_score is str, normalized_score is int)
     db_drill_result = DrillResult(
-        player_id=player.id, # Use player.id here
+        player_id=player.id,
         drill_type=drill_result.drill_type,
         raw_score=drill_result.raw_score,
         normalized_score=normalized_score
@@ -507,14 +508,12 @@ async def reset_players(
 @app.get("/rankings/export")
 async def export_rankings(
     format: Literal["csv", "pdf"] = Query(..., description="Export format: 'csv' or 'pdf'"),
-    # Use Enum for query parameter validation
     age_group: Optional[AgeGroupEnum] = Query(None, description="Age group filter (6U, 8U, 10U, 12U, 14U)"),
     session: AsyncSession = Depends(get_session)
 ):
-    # --- 1. Fetch and Rank Players (similar to /rankings endpoint) ---
+    # --- 1. Fetch and Rank Players ---
     query = select(Player)
     if age_group:
-        # Filter directly on the age_group string
         query = query.where(Player.age_group == age_group)
 
     result = await session.execute(query)
@@ -522,13 +521,16 @@ async def export_rankings(
 
     player_data_list = []
     for player in players:
-        composite_score, best_normalized_scores = await calculate_composite_score(player.id, session)
+        # Fetch composite score, best normalized scores, AND best raw scores
+        composite_score, best_normalized_scores, best_raw_scores = await calculate_composite_score(player.id, session)
         player_info = player.model_dump()
         player_info['composite_score'] = composite_score
-        # Add individual normalized scores
-        for drill_type_enum in DrillType:
-            drill_key = f"{drill_type_enum.value}_norm"
-            player_info[drill_key] = best_normalized_scores.get(drill_type_enum, None)
+        # Store the raw scores corresponding to the best normalized attempts
+        player_info['best_raw_scores'] = best_raw_scores
+        # # We might not need to store best_normalized_scores here anymore if only composite and raw are needed for export
+        # for drill_type_enum in DrillType:
+        #     drill_key = f"{drill_type_enum.value}_norm"
+        #     player_info[drill_key] = best_normalized_scores.get(drill_type_enum, None)
         player_data_list.append(player_info)
 
     player_data_list.sort(key=lambda p: p['composite_score'], reverse=True)
@@ -537,10 +539,10 @@ async def export_rankings(
     current_rank = 1
     for i, player_data in enumerate(player_data_list):
         if i > 0 and player_data['composite_score'] == player_data_list[i-1]['composite_score']:
-            rank_to_assign = ranked_player_export_data[-1]['Rank'] # Use Rank key from export dict
+            rank_to_assign = ranked_player_export_data[-1]['Rank']
         else:
             rank_to_assign = current_rank
-        
+
         export_entry = {
             "Rank": rank_to_assign,
             "Name": player_data['name'],
@@ -549,15 +551,15 @@ async def export_rankings(
             "CompositeScore": player_data['composite_score'],
             "PhotoURL": player_data['photo_url'] if player_data['photo_url'] else "N/A",
         }
-        # Add individual scores to export entry
+        # Add individual RAW scores to export entry
+        retrieved_raw_scores = player_data.get('best_raw_scores', {}) # Get the raw scores dict
         for drill_type_enum in DrillType:
-             drill_key = f"{drill_type_enum.value}_norm"
-             score = player_data.get(drill_key)
-             # Format score for display
-             export_entry[drill_type_enum.value] = f"{score:.2f}" if score is not None else "N/A"
+             raw_score = retrieved_raw_scores.get(drill_type_enum)
+             # Use the raw score string directly, or "N/A" if missing
+             export_entry[drill_type_enum.value] = raw_score if raw_score is not None else "N/A"
 
         ranked_player_export_data.append(export_entry)
-        current_rank += 1
+        current_rank += 1 # Increment rank for the next player regardless of ties for display
 
     # --- 2. Generate File Content --- 
     file_content = io.BytesIO() # Use BytesIO for binary formats like PDF
@@ -566,18 +568,37 @@ async def export_rankings(
 
     if format == "csv":
         media_type = "text/csv"
-        df = pd.DataFrame(ranked_player_export_data)
-        # Reorder columns for clarity
-        column_order = ["Rank", "Name", "Number", "AgeGroup", "CompositeScore"] + \
-                       [dt.value for dt in DrillType] + ["PhotoURL"]
-        df = df[column_order]
-        csv_content = df.to_csv(index=False)
-        file_content = io.StringIO(csv_content) # Use StringIO for text
-        file_content.seek(0)
-        # Return as StreamingResponse for text
-        return StreamingResponse(file_content, media_type=media_type, headers={
-            "Content-Disposition": f"attachment; filename={filename}"
-        })
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header row dynamically including drill types
+        header = ["Rank", "Name", "Number", "AgeGroup", "CompositeScore"]
+        for drill_type_enum in DrillType:
+            header.append(drill_type_enum.value.replace("_", " ").title()) # Use formatted drill name as header
+        # Removed: header.append("PhotoURL") # Remove photo URL from CSV export
+        writer.writerow(header)
+
+        # Write player data rows
+        for player_data in ranked_player_export_data:
+            # Ensure age_group is the string value
+            age_group_val = player_data["AgeGroup"]
+            if isinstance(age_group_val, AgeGroupEnum):
+                age_group_val = age_group_val.value
+            
+            row = [
+                str(player_data["Rank"]),
+                str(player_data["Name"]),
+                str(player_data["Number"]),
+                str(age_group_val),
+                f"{player_data['CompositeScore']:.2f}",
+            ]
+            # Add raw drill scores (already strings or 'N/A')
+            for drill_type_enum in DrillType:
+                 row.append(player_data[drill_type_enum.value]) # Append the raw score string
+            # Removed: row.append(player_data["PhotoURL"])
+            writer.writerow(row)
+
+        file_content = io.BytesIO(output.getvalue().encode('utf-8'))
 
     elif format == "pdf":
         media_type = "application/pdf"
