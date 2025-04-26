@@ -451,13 +451,18 @@ async def read_rankings(
     for i, player_data in enumerate(player_scores):
         # Handle ties: if the score is the same as the previous player, assign the same rank
         if i > 0 and player_data['composite_score'] == player_scores[i-1]['composite_score']:
-            rank_to_assign = ranked_players[-1].rank # FIX: Use dot notation for Pydantic model attribute
+            # Correctly access rank attribute on the PlayerRankingRead model
+            rank_to_assign = ranked_players[-1].rank 
         else:
             rank_to_assign = current_rank
         
         player_data['rank'] = rank_to_assign
         ranked_players.append(PlayerRankingRead(**player_data))
-        current_rank += 1
+        # Increment rank number only if it's different from the previous player's rank
+        # This ensures correct numbering with ties (e.g., 1, 2, 2, 4)
+        if i == 0 or rank_to_assign != ranked_players[-2].rank:
+             current_rank = rank_to_assign + 1
+        # else: current_rank remains the same for the next potential tie
 
     return ranked_players
 
