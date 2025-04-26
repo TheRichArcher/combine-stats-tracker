@@ -597,19 +597,17 @@ async def export_rankings(
 
     if format == "csv":
         media_type = "text/csv"
-        output = io.StringIO()
+        output = io.StringIO() # Use StringIO for text data
         writer = csv.writer(output)
 
         # Write header row dynamically including drill types
         header = ["Rank", "Name", "Number", "AgeGroup", "CompositeScore"]
         for drill_type_enum in DrillType:
-            header.append(drill_type_enum.value.replace("_", " ").title()) # Use formatted drill name as header
-        # Removed: header.append("PhotoURL") # Remove photo URL from CSV export
+            header.append(drill_type_enum.value.replace("_", " ").title())
         writer.writerow(header)
 
         # Write player data rows
         for player_data in ranked_player_export_data:
-            # Ensure age_group is the string value
             age_group_val = player_data["AgeGroup"]
             if isinstance(age_group_val, AgeGroupEnum):
                 age_group_val = age_group_val.value
@@ -621,13 +619,18 @@ async def export_rankings(
                 str(age_group_val),
                 f"{player_data['CompositeScore']:.2f}",
             ]
-            # Add raw drill scores (already strings or 'N/A')
+            # Add raw drill scores
             for drill_type_enum in DrillType:
-                 row.append(player_data[drill_type_enum.value]) # Append the raw score string
-            # Removed: row.append(player_data["PhotoURL"])
+                 row.append(player_data[drill_type_enum.value]) 
             writer.writerow(row)
 
-        file_content = io.BytesIO(output.getvalue().encode('utf-8'))
+        # Reset the stream position to the beginning
+        output.seek(0)
+        
+        # Return StreamingResponse directly with the StringIO object
+        return StreamingResponse(output, media_type=media_type, headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        })
 
     elif format == "pdf":
         media_type = "application/pdf"
