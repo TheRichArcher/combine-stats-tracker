@@ -582,8 +582,14 @@ function App() {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              list="player-names-list"
               required
             />
+            <datalist id="player-names-list">
+              {allPlayers && allPlayers.map((player) => (
+                <option key={player.id} value={player.name} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label htmlFor="ageGroup">Age Group:</label>
