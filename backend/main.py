@@ -428,41 +428,65 @@ async def read_rankings(
     # Build query for players
     query = select(Player)
     if age_group:
-        # Filter directly on the age_group string
+        # Filter directly on the age_group Enum value
         query = query.where(Player.age_group == age_group)
 
-    result = await session.execute(query)
-    players = result.scalars().all()
+    try:
+        result = await session.execute(query)
+        players = result.scalars().all()
+    except Exception as e:
+        logging.error(f"Error fetching players for ranking: {e}")
+        raise HTTPException(status_code=500, detail="Database error fetching players")
 
     # Calculate composite score for each player
     player_scores = []
     for player in players:
-        composite_score, _ = await calculate_composite_score(player.id, session) # Use default weights
-        player_data = player.model_dump()
-        player_data['composite_score'] = composite_score
-        player_scores.append(player_data)
+        try:
+            # Use all return values from calculate_composite_score
+            composite_score, _, _ = await calculate_composite_score(player.id, session) 
+            player_data = player.model_dump()
+            player_data['composite_score'] = composite_score
+            player_scores.append(player_data)
+        except Exception as e:
+            logging.error(f"Error calculating composite score for player {player.id} ({player.name}): {e}")
+            # Optionally skip this player or assign a default score
+            # For now, skip the player to avoid breaking the ranking
+            continue 
 
     # Sort players by composite score (descending)
     player_scores.sort(key=lambda p: p['composite_score'], reverse=True)
 
-    # Assign ranks
+    # Assign ranks - Simpler logic
     ranked_players = []
     current_rank = 1
+    last_score = None
+    players_at_current_rank = 0
+
     for i, player_data in enumerate(player_scores):
-        # Handle ties: if the score is the same as the previous player, assign the same rank
-        if i > 0 and player_data['composite_score'] == player_scores[i-1]['composite_score']:
-            # Correctly access rank attribute on the PlayerRankingRead model
-            rank_to_assign = ranked_players[-1].rank 
-        else:
-            rank_to_assign = current_rank
+        score = player_data['composite_score']
         
+        if i > 0 and score == last_score:
+            # Tied with the previous player(s), assign the same rank
+            rank_to_assign = ranked_players[-1].rank
+            players_at_current_rank += 1 # Increment count of players at this rank
+        else:
+            # New score or first player
+            # The rank is the previous rank + number of players tied at that previous rank
+            rank_to_assign = current_rank 
+            current_rank += players_at_current_rank # Add the count of players from the *previous* rank
+            players_at_current_rank = 1 # Reset count for the new rank
+            current_rank = rank_to_assign # Set current_rank to the rank just assigned
+
         player_data['rank'] = rank_to_assign
-        ranked_players.append(PlayerRankingRead(**player_data))
-        # Increment rank number only if it's different from the previous player's rank
-        # This ensures correct numbering with ties (e.g., 1, 2, 2, 4)
-        if i == 0 or rank_to_assign != ranked_players[-2].rank:
-             current_rank = rank_to_assign + 1
-        # else: current_rank remains the same for the next potential tie
+        try:
+            ranked_players.append(PlayerRankingRead(**player_data))
+            last_score = score # Update last score seen
+            current_rank +=1 # Increment for the next rank position
+        except Exception as e:
+            # Log error if Pydantic validation fails for some reason
+            logging.error(f"Error creating PlayerRankingRead for data {player_data}: {e}")
+            # Skip this player if validation fails
+            continue
 
     return ranked_players
 
