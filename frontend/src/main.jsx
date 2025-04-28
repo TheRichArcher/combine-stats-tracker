@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import App from './App';
+import CoachDashboard from './CoachDashboard';
+import './index.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -12,6 +15,11 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Router>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/coaches" element={<CoachDashboard />} />
+      </Routes>
+    </Router>
   </React.StrictMode>
 ); 
