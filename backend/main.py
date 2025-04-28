@@ -191,37 +191,60 @@ async def calculate_composite_score(
     session: AsyncSession,
     weights: Dict[DrillType, float] = DEFAULT_DRILL_WEIGHTS
 ) -> tuple[float, Dict[DrillType, int], Dict[DrillType, str]]:
-    """Fetches normalized scores, calculates composite score, returns score, best normalized scores, and best raw scores."""
+    """
+    Fetches normalized scores, calculates composite score ensuring all drill types 
+    are considered (missing drills count as 0 normalized points). 
+    Returns composite score, best normalized scores (potentially including 0 for missing), 
+    and best raw scores (only for drills attempted).
+    """
     # Fetch all drill results for the player
     result = await session.execute(
         select(DrillResult).where(DrillResult.player_id == player_id)
     )
     drill_results = result.scalars().all()
 
-    total_score = 0.0
-    total_weight_applied = 0.0
-
-    best_scores: Dict[DrillType, int] = {}
-    best_raw_scores: Dict[DrillType, str] = {} # Dictionary to store best raw scores
+    # Find the best normalized and raw score for each *attempted* drill
+    attempted_best_normalized_scores: Dict[DrillType, int] = {}
+    attempted_best_raw_scores: Dict[DrillType, str] = {} 
     for res in drill_results:
         if res.normalized_score is not None:
-            # Only consider the best score if multiple attempts exist for the same drill
-            if res.drill_type not in best_scores or res.normalized_score > best_scores[res.drill_type]:
-                 best_scores[res.drill_type] = res.normalized_score
-                 best_raw_scores[res.drill_type] = res.raw_score # Store corresponding raw score
+            if res.drill_type not in attempted_best_normalized_scores or res.normalized_score > attempted_best_normalized_scores[res.drill_type]:
+                 attempted_best_normalized_scores[res.drill_type] = res.normalized_score
+                 attempted_best_raw_scores[res.drill_type] = res.raw_score 
 
-    # Calculate weighted score based on best normalized scores
-    for drill_type, norm_score in best_scores.items():
-        weight = weights.get(drill_type, 0)
+    total_score = 0.0
+    total_weight_applied = 0.0 # This will now sum weights for ALL drill types
+
+    # Iterate through ALL possible drill types defined in the Enum
+    for drill_type in DrillType: 
+        # Get the best score for this drill type, default to 0 if not attempted
+        norm_score = attempted_best_normalized_scores.get(drill_type, 0) 
+        
+        # Get the weight for this drill type
+        weight = weights.get(drill_type, 0) # Use default weight from DEFAULT_DRILL_WEIGHTS
+
+        # Add to the weighted total score
         total_score += norm_score * weight
+        
+        # Add the weight of this drill type to the total weight divisor
         total_weight_applied += weight
 
+    # Calculate the final composite score
     if total_weight_applied > 0:
         composite_score = (total_score / total_weight_applied)
     else:
+        # Should only happen if weights are all zero or DrillType enum is empty
         composite_score = 0.0
 
-    return round(composite_score, 2), best_scores, best_raw_scores # Return raw scores too
+    # --- Return Values ---
+    # The `best_normalized_scores` returned might now include 0s for drills the player didn't attempt,
+    # which might be useful for some display purposes, but the primary impact is the composite score.
+    # The `best_raw_scores` dictionary still only contains scores for drills actually attempted.
+    
+    # Create the final dictionary of normalized scores to return (including 0s for missing)
+    final_normalized_scores = {dt: attempted_best_normalized_scores.get(dt, 0) for dt in DrillType}
+
+    return round(composite_score, 2), final_normalized_scores, attempted_best_raw_scores
 
 # --- Models ---
 # Define the allowed age group literals
