@@ -88,6 +88,14 @@ function App() {
   const [editError, setEditError] = useState(''); // Error specific to the edit operation
   // --- <<< END NEW EDITING STATE >>> ---
 
+  // --- >>> NEW: State for transferring player age group <<< ---
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [playerToTransfer, setPlayerToTransfer] = useState(null); // Store the full player object
+  const [selectedNewAgeGroup, setSelectedNewAgeGroup] = useState('');
+  const [transferError, setTransferError] = useState('');
+  const [isTransferring, setIsTransferring] = useState(false);
+  // --- <<< END NEW TRANSFER STATE >>> ---
+
   // --- Effects for Auto-clearing CSV Messages ---
   useEffect(() => {
     let summaryTimer;
@@ -685,6 +693,82 @@ function App() {
   };
   // --- <<< END NEW DELETE HANDLER >>> ---
 
+  // --- >>> NEW: Handlers for transferring player age group <<< ---
+  const openTransferModal = (playerId) => {
+    const player = allPlayers.find(p => p.id === playerId);
+    if (player) {
+      setPlayerToTransfer(player);
+      setSelectedNewAgeGroup(''); // Reset selection
+      setTransferError(''); // Clear previous errors
+      setIsTransferModalOpen(true);
+    } else {
+      alert("Could not find player details."); // Should ideally not happen
+    }
+  };
+
+  const handleTransferConfirm = async () => {
+    if (!playerToTransfer || !selectedNewAgeGroup) {
+      setTransferError("Please select a new age group.");
+      return;
+    }
+
+    if (selectedNewAgeGroup === playerToTransfer.age_group) {
+      setTransferError("New age group must be different from the current one.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to transfer ${playerToTransfer.name} (${playerToTransfer.number}) from ${playerToTransfer.age_group} to ${selectedNewAgeGroup}?`)) {
+      return;
+    }
+
+    setIsTransferring(true);
+    setTransferError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/players/${playerToTransfer.id}/transfer-age-group`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_age_group: selectedNewAgeGroup }),
+      });
+
+      const result = await response.json(); // Attempt to parse JSON even on error
+
+      if (!response.ok) {
+        throw new HttpError(response.status, result.detail || `HTTP error ${response.status}`);
+      }
+
+      alert(`✅ Player ${result.name} successfully transferred to ${result.age_group}.`);
+      setIsTransferModalOpen(false);
+      setPlayerToTransfer(null);
+      setSelectedNewAgeGroup('');
+
+      // Refresh data
+      fetchPlayers(); // Refresh the main player list
+      if (selectedAgeGroup) {
+        fetchRankings(selectedAgeGroup); // Refresh rankings if an age group is being viewed
+      }
+      // If the transferred player was being viewed, refresh their results too (age group might change display filters in future)
+      if(selectedPlayerIdForView === result.id) {
+        fetchPlayerResults(result.id);
+      }
+
+    } catch (error) {
+      console.error('Error transferring player:', error);
+      const errorMsg = (error instanceof HttpError) ? error.detail : (error.message || 'Unknown error');
+      setTransferError(`Transfer failed: ${errorMsg}`);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleCancelTransfer = () => {
+    setIsTransferModalOpen(false);
+    setPlayerToTransfer(null);
+    setSelectedNewAgeGroup('');
+    setTransferError('');
+  };
+  // --- <<< END NEW TRANSFER HANDLERS >>> ---
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -862,6 +946,15 @@ function App() {
         {selectedPlayerIdForView && (
           <div>
             <h2>Results for Player ID: {selectedPlayerIdForView}</h2>
+            {/* --- >>> NEW: Transfer Button <<< --- */}
+            <button 
+              onClick={() => openTransferModal(selectedPlayerIdForView)}
+              className="button button-secondary button-small"
+              style={{ marginBottom: '15px' }}
+            >
+              Transfer Age Group...
+            </button>
+            {/* --- <<< END NEW: Transfer Button >>> --- */}
             {resultsLoading && <p>Loading results...</p>}
             {resultsError && <p className="message error">{resultsError}</p>}
             {!resultsLoading && !resultsError && selectedPlayerResults.length > 0 && (
@@ -1161,6 +1254,54 @@ function App() {
         </div>
       )}
       {/* --- End Reset Confirmation Modal --- */}
+
+      {/* --- >>> NEW: Player Transfer Modal <<< --- */}
+      {isTransferModalOpen && playerToTransfer && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Transfer Player Age Group</h2>
+            <p>Transferring: <strong>{playerToTransfer.name} (#{playerToTransfer.number})</strong></p>
+            <p>Current Age Group: <strong>{playerToTransfer.age_group}</strong></p>
+            
+            <div style={{ margin: '15px 0' }}>
+              <label htmlFor="newAgeGroupSelect">Select New Age Group:</label>
+              <select
+                id="newAgeGroupSelect"
+                value={selectedNewAgeGroup}
+                onChange={(e) => {
+                  setSelectedNewAgeGroup(e.target.value);
+                  if (transferError) setTransferError(''); // Clear error on change
+                }}
+                required
+                style={{ marginLeft: '10px', padding: '5px' }}
+              >
+                <option value="" disabled>-- Select New Group --</option>
+                {AGE_GROUPS.filter(group => group !== '' && group !== playerToTransfer.age_group).map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {transferError && <p className="modal-error">{transferError}</p>}
+            
+            <div className="modal-actions">
+              <button onClick={handleCancelTransfer} className="button" disabled={isTransferring}>
+                Cancel
+              </button>
+              <button
+                onClick={handleTransferConfirm}
+                className="button button-primary" // Use primary style for confirm
+                disabled={!selectedNewAgeGroup || isTransferring || selectedNewAgeGroup === playerToTransfer.age_group}
+              >
+                {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- <<< END NEW PLAYER TRANSFER MODAL >>> --- */}
 
     </div>
   );

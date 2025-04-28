@@ -310,6 +310,11 @@ class PlayerSummaryRead(PlayerRead):
 class PlayerRankingRead(PlayerSummaryRead):
     rank: int
 
+# --- >>> NEW: Model for transferring age group <<< ---
+class PlayerTransferAgeGroup(SQLModel):
+    new_age_group: AgeGroupEnum
+# --- <<< END NEW MODEL >>> ---
+
 # --- API Endpoints ---
 @app.post("/players/", response_model=PlayerRead)
 async def create_player(
@@ -922,6 +927,40 @@ async def delete_drill_result(
         logging.error(f"Database error deleting drill result {result_id}: {e}")
         raise HTTPException(status_code=500, detail="Database error during deletion")
 # --- <<< END NEW DELETE ENDPOINT >>> ---
+
+# --- >>> NEW: Endpoint to transfer a player's age group <<< ---
+@app.patch("/players/{player_id}/transfer-age-group", response_model=PlayerRead)
+async def transfer_player_age_group(
+    player_id: int,
+    transfer_data: PlayerTransferAgeGroup,
+    session: AsyncSession = Depends(get_session),
+    # TODO: Add admin authentication dependency here, e.g.:
+    # current_admin_user: User = Depends(get_current_admin_user)
+):
+    """Updates the age_group for a specific player."""
+    
+    # Fetch the player
+    player = await session.get(Player, player_id)
+    if not player:
+        raise HTTPException(status_code=404, detail=f"Player with id {player_id} not found")
+
+    print(f"Transferring player ID: {player_id} ({player.name}) from {player.age_group} to {transfer_data.new_age_group}")
+
+    # Update the age group
+    player.age_group = transfer_data.new_age_group
+    
+    # Save changes to the database
+    try:
+        session.add(player) # Add the updated player instance to the session
+        await session.commit()
+        await session.refresh(player)
+        print(f"Player {player_id} age group updated successfully to {player.age_group}.")
+        return player
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Database error transferring player {player_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database error during player transfer")
+# --- <<< END NEW TRANSFER ENDPOINT >>> ---
 
 # --- Uvicorn Runner (for local development) ---
 if __name__ == "__main__":
