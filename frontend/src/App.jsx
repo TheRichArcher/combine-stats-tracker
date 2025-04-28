@@ -82,6 +82,12 @@ function App() {
   // --- NEW: Reset Tool Visibility State (within Admin section) ---
   const [showResetTool, setShowResetTool] = useState(false);
 
+  // --- >>> NEW: State for inline editing drill results <<< ---
+  const [editingResultId, setEditingResultId] = useState(null); // ID of the result being edited
+  const [editingRawScore, setEditingRawScore] = useState(''); // Temp value during edit
+  const [editError, setEditError] = useState(''); // Error specific to the edit operation
+  // --- <<< END NEW EDITING STATE >>> ---
+
   // --- Effects for Auto-clearing CSV Messages ---
   useEffect(() => {
     let summaryTimer;
@@ -566,6 +572,64 @@ function App() {
     return sortedGroupLabels.map(label => groupedOptions[label]);
   };
 
+  // --- >>> NEW: Handler for updating a drill result <<< ---
+  const handleUpdateDrillResult = async (resultId) => {
+    if (!editingRawScore.trim()) {
+      setEditError('Score cannot be empty.');
+      return;
+    }
+    setEditError(''); // Clear previous error
+
+    // Optional confirmation
+    if (!window.confirm(`Are you sure you want to update the score to "${editingRawScore}"?`)) {
+      return;
+    }
+
+    // TODO: Add Auth Headers if needed
+    const headers = { 'Content-Type': 'application/json' };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/drill-results/${resultId}`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify({ raw_score: editingRawScore }),
+      });
+
+      if (!response.ok) {
+        let errorDetail = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.detail || errorDetail;
+        } catch (jsonError) { /* Ignore JSON parsing error */ }
+        throw new HttpError(response.status, errorDetail);
+      }
+
+      const updatedResult = await response.json();
+
+      // Update the state locally
+      setSelectedPlayerResults(prevResults =>
+        prevResults.map(res => 
+          res.id === resultId ? updatedResult : res
+        )
+      );
+
+      // Clear editing state
+      setEditingResultId(null);
+      setEditingRawScore('');
+      alert('Drill result updated successfully!'); // Simple success feedback
+
+      // Refresh rankings as the update might affect composite scores
+      fetchRankings(selectedAgeGroup); 
+
+    } catch (error) {
+      console.error('Error updating drill result:', error);
+      const errorMsg = (error instanceof HttpError) ? error.detail : (error.message || 'Unknown error');
+      setEditError(`Update failed: ${errorMsg}`); // Show error near the edit controls
+      // alert(`Update failed: ${errorMsg}`); // Alternative: use alert
+    }
+  };
+  // --- <<< END NEW UPDATE HANDLER >>> ---
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -752,14 +816,62 @@ function App() {
                     <th>Drill Type</th>
                     <th>Raw Score</th>
                     <th>Normalized Score</th>
+                    <th>Actions</th>{/* <-- ADDED Actions Header */} 
                   </tr>
                 </thead>
                 <tbody>
                   {selectedPlayerResults.map((result) => (
                     <tr key={result.id}>
                       <td>{result.drill_type.replace(/_/g, ' ').toUpperCase()}</td>
-                      <td>{result.raw_score}</td>
-                      <td>{result.normalized_score !== null ? result.normalized_score.toFixed(2) : 'N/A'}</td>
+                      {/* Conditional rendering for Raw Score cell */} 
+                      <td>
+                        {editingResultId === result.id ? (
+                          <input 
+                            type="text" // Use text to allow various formats like "7/10"
+                            value={editingRawScore}
+                            onChange={(e) => setEditingRawScore(e.target.value)}
+                            // Basic styling example
+                            style={{ width: '80px', padding: '2px' }} 
+                          />
+                        ) : (
+                          result.raw_score
+                        )}
+                      </td>
+                      <td>{result.normalized_score !== null ? result.normalized_score.toFixed(0) : 'N/A'}</td>{/* Keep normalized score read-only */}
+                      {/* Actions Cell */} 
+                      <td>
+                        {editingResultId === result.id ? (
+                          <>
+                            <button 
+                              onClick={() => handleUpdateDrillResult(result.id)}
+                              disabled={!editingRawScore.trim()} // Disable if input is empty
+                              className="button button-small button-success" // Example styling
+                            >
+                              Save
+                            </button>
+                            <button 
+                              onClick={() => { setEditingResultId(null); setEditError(''); }} // Cancel clears state and error
+                              className="button button-small button-secondary" // Example styling
+                              style={{ marginLeft: '5px' }}
+                            >
+                              Cancel
+                            </button>
+                            {/* Display edit error inline */} 
+                            {editError && <p className="message error" style={{ fontSize: '0.8em', margin: '5px 0 0 0' }}>{editError}</p>}
+                          </>
+                        ) : (
+                          <button 
+                            onClick={() => { 
+                              setEditingResultId(result.id); 
+                              setEditingRawScore(result.raw_score); 
+                              setEditError(''); // Clear error when starting edit
+                            }}
+                            className="button button-small button-link-style" // Example styling
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
