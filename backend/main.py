@@ -241,7 +241,7 @@ class PlayerCreate(SQLModel):
     name: str
     age_group: AgeGroupEnum # Use Enum for request validation too
 
-class PlayerRead(PlayerBase): # Inherits name, age_group (which is now Enum)
+class PlayerRead(PlayerBase):
     id: int
     number: Optional[int]
     photo_url: Optional[str]
@@ -274,6 +274,11 @@ class DrillResultCreate(SQLModel):
 
 class DrillResultRead(DrillResultBase):
     id: int
+
+# --- >>> NEW: Model for updating raw_score <<< ---
+class DrillResultUpdate(SQLModel):
+    raw_score: str
+# --- <<< END NEW MODEL >>> --- 
 
 # New Response Models for Ranking
 class PlayerSummaryRead(PlayerRead):
@@ -817,6 +822,83 @@ async def upload_players_csv(
 
     finally:
         await file.close()
+
+# --- >>> NEW: Endpoint to update a specific drill result <<< ---
+@app.patch("/drill-results/{result_id}", response_model=DrillResultRead)
+async def update_drill_result(
+    result_id: int,
+    update_data: DrillResultUpdate, 
+    session: AsyncSession = Depends(get_session),
+    # TODO: Add admin authentication dependency here, e.g.:
+    # current_admin_user: User = Depends(get_current_admin_user) 
+):
+    """Updates the raw_score for a specific drill result and recalculates normalized_score."""
+    
+    # Fetch the existing drill result
+    db_result = await session.get(DrillResult, result_id)
+    if not db_result:
+        raise HTTPException(status_code=404, detail="Drill result not found")
+
+    print(f"Updating drill result ID: {result_id}")
+    print(f"Original raw_score: {db_result.raw_score}, New raw_score: {update_data.raw_score}")
+
+    # Update the raw score
+    db_result.raw_score = update_data.raw_score
+    
+    # Recalculate the normalized score
+    try:
+        # Use the existing drill_type from the fetched record
+        db_result.normalized_score = calculate_normalized_score(db_result.drill_type, db_result.raw_score)
+        print(f"Recalculated normalized_score: {db_result.normalized_score}")
+    except Exception as e:
+        # Log if calculation fails, but potentially proceed depending on requirements
+        # Maybe should raise 422 if new raw_score is unparseable?
+        logging.error(f"Could not recalculate normalized score for drill result {result_id} with raw score '{db_result.raw_score}': {e}")
+        # For now, we might allow saving the raw score even if normalization fails, setting norm_score to None/0
+        # db_result.normalized_score = None # Or 0, depending on desired behavior
+        # Let's raise an error if calculation fails, as it implies invalid input
+        raise HTTPException(status_code=422, detail=f"Could not process raw_score '{db_result.raw_score}' for normalization.")
+
+    # Save changes to the database
+    try:
+        session.add(db_result)
+        await session.commit()
+        await session.refresh(db_result)
+        print(f"Drill result {result_id} updated successfully.")
+        return db_result
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Database error updating drill result {result_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database error during update")
+# --- <<< END NEW ENDPOINT >>> --- 
+
+# --- >>> NEW: Endpoint to delete a specific drill result <<< ---
+@app.delete("/drill-results/{result_id}")
+async def delete_drill_result(
+    result_id: int,
+    session: AsyncSession = Depends(get_session),
+    # TODO: Add admin authentication dependency here
+):
+    """Deletes a specific drill result by its ID."""
+    
+    # Fetch the existing drill result
+    db_result = await session.get(DrillResult, result_id)
+    if not db_result:
+        raise HTTPException(status_code=404, detail="Drill result not found")
+
+    print(f"Deleting drill result ID: {result_id}")
+
+    # Delete from the database
+    try:
+        await session.delete(db_result)
+        await session.commit()
+        print(f"Drill result {result_id} deleted successfully.")
+        return {"message": "Drill result deleted successfully."}
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Database error deleting drill result {result_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database error during deletion")
+# --- <<< END NEW DELETE ENDPOINT >>> ---
 
 # --- Uvicorn Runner (for local development) ---
 if __name__ == "__main__":

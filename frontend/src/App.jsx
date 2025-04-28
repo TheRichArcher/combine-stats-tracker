@@ -630,6 +630,48 @@ function App() {
   };
   // --- <<< END NEW UPDATE HANDLER >>> ---
 
+  // --- >>> NEW: Handler for deleting a drill result <<< ---
+  const handleDeleteDrillResult = async (resultId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this drill result? This action cannot be undone.")) {
+      return;
+    }
+
+    // TODO: Add Auth Headers if needed
+    const headers = {}; 
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/drill-results/${resultId}`, {
+        method: 'DELETE',
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        let errorDetail = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.detail || errorDetail;
+        } catch (jsonError) { /* Ignore JSON parsing error */ }
+        throw new HttpError(response.status, errorDetail);
+      }
+
+      // Update the state locally by filtering out the deleted result
+      setSelectedPlayerResults(prevResults =>
+        prevResults.filter(res => res.id !== resultId)
+      );
+
+      alert('✅ Drill result deleted successfully!'); // Simple success feedback
+
+      // Refresh rankings as the deletion might affect composite scores
+      fetchRankings(selectedAgeGroup);
+
+    } catch (error) {
+      console.error('Error deleting drill result:', error);
+      const errorMsg = (error instanceof HttpError) ? error.detail : (error.message || 'Unknown error');
+      alert(`❌ Deletion failed: ${errorMsg}`); // Use alert for delete errors
+    }
+  };
+  // --- <<< END NEW DELETE HANDLER >>> ---
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -860,16 +902,26 @@ function App() {
                             {editError && <p className="message error" style={{ fontSize: '0.8em', margin: '5px 0 0 0' }}>{editError}</p>}
                           </>
                         ) : (
-                          <button 
-                            onClick={() => { 
-                              setEditingResultId(result.id); 
-                              setEditingRawScore(result.raw_score); 
-                              setEditError(''); // Clear error when starting edit
-                            }}
-                            className="button button-small button-link-style" // Example styling
-                          >
-                            ✏️ Edit
-                          </button>
+                          <>
+                            <button 
+                              onClick={() => { 
+                                setEditingResultId(result.id); 
+                                setEditingRawScore(result.raw_score); 
+                                setEditError(''); // Clear error when starting edit
+                              }}
+                              className="button button-small button-link-style" // Example styling
+                            >
+                              ✏️ Edit
+                            </button>
+                            {/* Add Delete Button - Show only when NOT editing */}
+                            <button 
+                              onClick={() => handleDeleteDrillResult(result.id)}
+                              className="button button-small button-danger button-link-style" // Example styling
+                              style={{ marginLeft: '10px' }} // Add some space
+                            >
+                              🗑️ Delete
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>
