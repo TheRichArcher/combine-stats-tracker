@@ -354,9 +354,9 @@ function App() {
     }
     // --- <<< END Player Lookup >>> ---
 
-    // --- >>> Construct payload with player_id <<< ---
+    // --- >>> Construct payload with player_number <<< ---
     const drillData = {
-        player_id: targetPlayer.id, // Use the found player's ID
+        player_number: parseInt(playerId, 10), // Changed from player_id
         drill_type: drillType,
         raw_score: rawScore // Send rawScore directly as a string
     };
