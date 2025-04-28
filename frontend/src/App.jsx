@@ -343,11 +343,24 @@ function App() {
         return;
     }
 
+    // --- >>> Find the player by number to get their ID <<< ---
+    const playerNumberToFind = parseInt(playerId, 10);
+    const targetPlayer = allPlayers.find(p => p.number === playerNumberToFind);
+
+    if (!targetPlayer) {
+      setDrillMessage(`Error: Player with number ${playerNumberToFind} not found.`);
+      setIsSubmittingDrill(false);
+      return;
+    }
+    // --- <<< END Player Lookup >>> ---
+
+    // --- >>> Construct payload with player_id <<< ---
     const drillData = {
-        player_number: parseInt(playerId, 10),
+        player_id: targetPlayer.id, // Use the found player's ID
         drill_type: drillType,
         raw_score: rawScore // Send rawScore directly as a string
     };
+    // --- <<< END Payload Construction >>> ---
 
     try {
         // Use API_BASE_URL
