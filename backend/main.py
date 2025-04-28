@@ -962,6 +962,44 @@ async def transfer_player_age_group(
         raise HTTPException(status_code=500, detail="Database error during player transfer")
 # --- <<< END NEW TRANSFER ENDPOINT >>> ---
 
+# --- >>> NEW: Endpoint to delete a player and their results <<< ---
+@app.delete("/players/{player_id}", status_code=200) # Use 200 OK or 204 No Content for successful DELETE
+async def delete_player(
+    player_id: int,
+    session: AsyncSession = Depends(get_session),
+    # TODO: Add admin authentication dependency here
+):
+    """Deletes a player and all associated drill results."""
+    
+    # Fetch the player first to ensure they exist
+    player = await session.get(Player, player_id)
+    if not player:
+        raise HTTPException(status_code=404, detail=f"Player with id {player_id} not found")
+
+    print(f"Deleting player ID: {player_id} ({player.name}) and their drill results.")
+
+    try:
+        # 1. Delete associated drill results first
+        delete_results_stmt = delete(DrillResult).where(DrillResult.player_id == player_id)
+        results_result = await session.execute(delete_results_stmt)
+        deleted_results_count = results_result.rowcount
+        print(f"Deleted {deleted_results_count} drill results for player {player_id}.")
+
+        # 2. Delete the player object itself
+        await session.delete(player)
+        
+        # 3. Commit the transaction
+        await session.commit()
+        print(f"Player {player_id} deleted successfully.")
+        
+        return {"message": "Player and associated drill results deleted successfully."}
+
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Database error deleting player {player_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database error during player deletion")
+# --- <<< END NEW DELETE PLAYER ENDPOINT >>> ---
+
 # --- Uvicorn Runner (for local development) ---
 if __name__ == "__main__":
     import uvicorn

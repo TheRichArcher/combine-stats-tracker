@@ -769,6 +769,55 @@ function App() {
   };
   // --- <<< END NEW TRANSFER HANDLERS >>> ---
 
+  // --- >>> NEW: Handler for deleting a player <<< ---
+  const handleDeletePlayer = async (playerIdToDelete) => {
+    const player = allPlayers.find(p => p.id === playerIdToDelete);
+    if (!player) {
+      alert("Error: Could not find player details to delete.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to permanently delete ${player.name} (${player.number}) and all their drill results? This action cannot be undone.`)) {
+      return;
+    }
+
+    // Optional: Add a loading state if deletion takes time
+    // setIsDeleting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/players/${playerIdToDelete}`, {
+        method: 'DELETE',
+        // Add Auth headers if needed
+      });
+
+      const result = await response.json(); // Try parsing JSON even on error
+
+      if (!response.ok) {
+        throw new HttpError(response.status, result.detail || `HTTP error ${response.status}`);
+      }
+
+      alert('✅ Player deleted successfully!');
+      
+      // Clear the selection if the deleted player was being viewed
+      if (selectedPlayerIdForView === playerIdToDelete) {
+        setSelectedPlayerIdForView('');
+        setSelectedPlayerResults([]);
+      }
+
+      // Refresh data
+      fetchPlayers(); // Refresh player list
+      fetchRankings(selectedAgeGroup); // Refresh rankings (pass current selection)
+
+    } catch (error) {
+      console.error('Error deleting player:', error);
+      const errorMsg = (error instanceof HttpError) ? error.detail : (error.message || 'Unknown error');
+      alert(`❌ Deletion failed: ${errorMsg}`);
+    } finally {
+      // setIsDeleting(false);
+    }
+  };
+  // --- <<< END NEW DELETE HANDLER >>> ---
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -946,15 +995,26 @@ function App() {
         {selectedPlayerIdForView && (
           <div>
             <h2>Results for Player ID: {selectedPlayerIdForView}</h2>
-            {/* --- >>> NEW: Transfer Button <<< --- */}
-            <button 
-              onClick={() => openTransferModal(selectedPlayerIdForView)}
-              className="button button-secondary button-small"
-              style={{ marginBottom: '15px' }}
-            >
-              Transfer Age Group...
-            </button>
-            {/* --- <<< END NEW: Transfer Button >>> --- */}
+            {/* --- Player Action Buttons Container --- */}
+            <div style={{ marginBottom: '15px' }}> 
+              {/* Transfer Button */}
+              <button 
+                onClick={() => openTransferModal(selectedPlayerIdForView)}
+                className="button button-secondary button-small"
+              >
+                Transfer Age Group...
+              </button>
+              {/* Delete Button */}
+              <button 
+                onClick={() => handleDeletePlayer(selectedPlayerIdForView)}
+                className="button button-danger button-small"
+                style={{ marginLeft: '10px' }} // Add space between buttons
+              >
+                🗑️ Delete Player
+              </button>
+            </div>
+            {/* --- End Player Action Buttons Container --- */}
+
             {resultsLoading && <p>Loading results...</p>}
             {resultsError && <p className="message error">{resultsError}</p>}
             {!resultsLoading && !resultsError && selectedPlayerResults.length > 0 && (
