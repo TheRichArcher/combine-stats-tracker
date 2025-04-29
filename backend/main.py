@@ -82,6 +82,24 @@ async def lifespan(app: FastAPI):
 # --- FastAPI App Initialization ---
 app = FastAPI(lifespan=lifespan)
 
+# --- CORS Configuration ---
+# IMPORTANT: Update origins with your deployed frontend URL
+# You can use "*" for development, but be specific in production
+origins = [
+    "https://combine-stats-tracker-frontend.onrender.com", # Keep existing Render URL
+    "https://woo-combine.com", # Add the primary domain
+    "http://localhost:5173", # Keep for local development if needed
+    "http://127.0.0.1:5173" # Keep for local development if needed
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Explicit frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # --- Alembic Migrations on Startup ---
 # Import necessary Alembic components if not already imported globally
 # Note: asyncio is likely already imported
@@ -110,24 +128,6 @@ async def startup_event():
     await apply_migrations()
     print("Startup event complete (migrations attempted).")
 # --- End Alembic Migrations ---
-
-# --- CORS Configuration ---
-# IMPORTANT: Update origins with your deployed frontend URL
-# You can use "*" for development, but be specific in production
-origins = [
-    "https://combine-stats-tracker-frontend.onrender.com", # Keep existing Render URL
-    "https://woo-combine.com", # Add the primary domain
-    "http://localhost:5173", # Keep for local development if needed
-    "http://127.0.0.1:5173" # Keep for local development if needed
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,  # Explicit frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # --- Enums ---
 class AgeGroupEnum(str, Enum):
