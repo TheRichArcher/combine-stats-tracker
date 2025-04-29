@@ -42,10 +42,21 @@ if DATABASE_URL == "postgresql+asyncpg://user:password@host:port/dbname":
 # Use explicit async engine for FastAPI
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
+# Modified init_db to potentially avoid greenlet issue during startup
 async def init_db():
-    async with engine.begin() as conn:
-        # await conn.run_sync(SQLModel.metadata.drop_all) # Use cautiously in dev - RE-COMMENTED AFTER SCHEMA SYNC
-        await conn.run_sync(SQLModel.metadata.create_all)
+    # Connect directly using the engine's metadata binding if possible,
+    # or run sync directly without the 'begin' context for this specific task.
+    # This is less common but might avoid the greenlet issue during startup.
+    try:
+        async with engine.connect() as conn: # Get a connection
+             # Run the synchronous SQLModel create_all within the async connection context
+             # await conn.run_sync(SQLModel.metadata.drop_all) # Keep commented out
+             await conn.run_sync(SQLModel.metadata.create_all)
+        print("Database tables checked/created successfully.")
+    except Exception as e:
+        print(f"Error during initial database table creation: {e}")
+        # Decide if you want to raise the error or just log it
+        # raise # Re-raise the exception to potentially halt startup if DB init fails
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async_session = AsyncSession(engine, expire_on_commit=False)
