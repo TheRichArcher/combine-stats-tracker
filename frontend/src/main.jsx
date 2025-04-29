@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import App from './App';
 import CoachDashboard from './CoachDashboard';
-import './index.css';
+import './App.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
