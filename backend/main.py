@@ -25,6 +25,8 @@ from sqlalchemy import Date # Import Date type for birthdate
 import csv # Added for CSV parsing
 import asyncio # Added for dummy sleep
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # --- Environment Variables & Config ---
 # Load environment variables from .env file for database connection
@@ -1000,9 +1002,53 @@ async def delete_player(
         raise HTTPException(status_code=500, detail="Database error during player deletion")
 # --- <<< END NEW DELETE PLAYER ENDPOINT >>> ---
 
+# --- Serve Static Files & Catch-all for SPA ---
+
+# Mount the 'assets' directory from the frontend build output
+# The path needs to be relative to this main.py file
+# ../frontend/dist/assets
+frontend_assets_path = os.path.join(os.path.dirname(__file__), "../frontend/dist/assets")
+if os.path.exists(frontend_assets_path):
+    app.mount("/assets", StaticFiles(directory=frontend_assets_path), name="assets")
+    print(f"Mounted static assets from: {frontend_assets_path}")
+else:
+    print(f"WARNING: Static assets directory not found at {frontend_assets_path}. Frontend assets will not be served.")
+
+
+# Catch-all route to serve index.html for any non-API path
+# This MUST be the LAST route defined
+@app.get("/{full_path:path}", response_class=FileResponse, include_in_schema=False) # Exclude from OpenAPI docs
+async def serve_react_app(full_path: str):
+    index_html_path = os.path.join(os.path.dirname(__file__), "../frontend/dist/index.html")
+    print(f"Attempting to serve index.html for path: /{full_path}") # Debugging log
+
+    # Check if the file exists
+    if not os.path.exists(index_html_path):
+        print(f"ERROR: index.html not found at {index_html_path}") # Debugging log
+        # Use JSONResponse for the error, as FileResponse expects a file
+        # Raising HTTPException might be cleaner if you prefer standard FastAPI error handling
+        raise HTTPException(status_code=404, detail="Frontend build (index.html) not found.")
+        # return JSONResponse(
+        #     status_code=404, 
+        #     content={"message": "Frontend build not found. Cannot serve index.html."}
+        # )
+    
+    # Serve index.html
+    return FileResponse(index_html_path)
+
+
 # --- Uvicorn Runner (for local development) ---
 if __name__ == "__main__":
     import uvicorn
     # Note: Database URL should be configured via environment variables or a .env file
     print(f"Starting Uvicorn server. Ensure PostgreSQL is running and accessible at {DATABASE_URL}")
+    # Check if frontend build exists before starting
+    index_html_path = os.path.join(os.path.dirname(__file__), "../frontend/dist/index.html")
+    if not os.path.exists(index_html_path):
+         print("\n**********************************************************************")
+         print("WARNING: Frontend build (../frontend/dist/index.html) not found!")
+         print("         Run 'npm run build' in the 'frontend' directory.")
+         print("         The API will run, but the frontend UI will not be served.")
+         print("**********************************************************************\n")
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
