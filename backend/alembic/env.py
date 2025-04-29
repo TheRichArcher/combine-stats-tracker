@@ -13,9 +13,8 @@ sys.path.insert(0, project_root)
 # Now import models using the module path
 from backend.main import Player, DrillResult
 
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, create_engine
 from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
@@ -81,39 +80,35 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
-    with context.begin_transaction():
-        context.run_migrations()
-
-async def run_migrations_online() -> None:
+def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-    db_url_for_engine = DATABASE_URL
-    if db_url_for_engine and "+asyncpg" not in db_url_for_engine:
-        print(f"WARNING: Forcing +asyncpg driver onto URL: {db_url_for_engine}")
-        db_url_for_engine = db_url_for_engine.replace("postgresql://", "postgresql+asyncpg://", 1)
-    elif not db_url_for_engine:
-        raise ValueError("DATABASE_URL is unexpectedly None in run_migrations_online")
+    sync_db_url = DATABASE_URL
+    if "+asyncpg" in sync_db_url:
+        sync_db_url = sync_db_url.replace("+asyncpg", "")
 
-    connectable = create_async_engine(
-        db_url_for_engine,
-        poolclass=pool.NullPool
-    )
+    engine_config = {
+        'sqlalchemy.url': sync_db_url,
+        'sqlalchemy.poolclass': 'pool.NullPool'
+    }
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+    connectable = create_engine(sync_db_url, poolclass=pool.NullPool)
 
-    await connectable.dispose()
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata
+        )
 
+        with context.begin_transaction():
+            context.run_migrations()
 
-import asyncio
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    asyncio.run(run_migrations_online())
+    run_migrations_online()
