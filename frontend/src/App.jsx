@@ -822,6 +822,7 @@ function App() {
   return (
     <div className="App container">
       <img src="/combine-logo.png" alt="Combine Stats Tracker Logo" className="logo" />
+      <button style={{ display: 'block', margin: '10px auto' }}>Coaches View</button>
 
       {/* Player Creation Form */}
       <div className="form-section">
