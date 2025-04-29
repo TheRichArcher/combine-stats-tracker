@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
 
@@ -822,7 +823,9 @@ function App() {
   return (
     <div className="App container">
       <img src="/combine-logo.png" alt="Combine Stats Tracker Logo" className="logo" />
-      <button style={{ display: 'block', margin: '10px auto' }}>Coaches View</button>
+      <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
+        Coaches View
+      </Link>
 
       {/* Player Creation Form */}
       <div className="form-section">
