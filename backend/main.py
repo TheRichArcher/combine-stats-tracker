@@ -29,18 +29,23 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 # --- Environment Variables & Config ---
-# Load environment variables from .env file for database connection
-load_dotenv()
+# Load .env file *before* creating the engine
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env') # Path relative to main.py
+load_dotenv(dotenv_path=dotenv_path)
+print(f"[main.py] Attempting to load .env from: {dotenv_path}")
 
+# Get DATABASE_URL after loading .env
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@host:port/dbname")
 
-if DATABASE_URL == "postgresql+asyncpg://user:password@host:port/dbname":
-    logging.warning("DATABASE_URL not found in environment variables. Using default placeholder.")
-    # In a real app, you might want to raise an error or exit if the DB URL isn't set.
+if "user:password" in DATABASE_URL:
+    print("WARNING: Using default placeholder DATABASE_URL.")
+    # Optionally raise an error if required:
+    # raise ValueError("DATABASE_URL not found in environment variables or .env file.")
+else:
+    print(f"[main.py] DATABASE_URL loaded successfully.")
 
-# --- Database Setup ---
-# Use explicit async engine for FastAPI
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+# --- Database Setup --- (Now uses the loaded DATABASE_URL)
+engine = create_async_engine(DATABASE_URL, echo=True, future=True) # <<< UNCOMMENTED
 
 # Modified init_db to potentially avoid greenlet issue during startup
 async def init_db():
@@ -69,13 +74,42 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting up...")
-    await init_db()
-    print("Database initialized.")
+    # await init_db() # <<< REMOVED: DB init/table creation will be handled by Alembic migrations
+    print("Lifespan startup complete (DB init via Alembic migrations)." )
     yield
     print("Shutting down...")
 
 # --- FastAPI App Initialization ---
 app = FastAPI(lifespan=lifespan)
+
+# --- Alembic Migrations on Startup ---
+# Import necessary Alembic components if not already imported globally
+# Note: asyncio is likely already imported
+from alembic.config import Config
+from alembic import command
+import asyncio # Ensure asyncio is imported
+
+async def apply_migrations():
+    """Applies Alembic migrations."""
+    print("Attempting to apply Alembic migrations...")
+    try:
+        alembic_cfg = Config("alembic.ini") # Assumes alembic.ini is in the root
+        # Run the synchronous Alembic command in a thread pool executor
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, command.upgrade, alembic_cfg, "head")
+        print("Alembic command.upgrade executed.")
+    except Exception as e:
+        print(f"Error during Alembic migration: {e}")
+        # Decide how to handle migration errors (e.g., log, raise, exit)
+        raise # Re-raise the exception to potentially halt startup if migrations fail
+
+@app.on_event("startup")
+async def startup_event():
+    """Runs Alembic migrations during application startup."""
+    print("Executing startup event...")
+    await apply_migrations()
+    print("Startup event complete (migrations attempted).")
+# --- End Alembic Migrations ---
 
 # --- CORS Configuration ---
 # IMPORTANT: Update origins with your deployed frontend URL
