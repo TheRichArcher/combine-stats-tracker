@@ -1077,28 +1077,37 @@ async def delete_player(
 frontend_build_dir = os.path.join(os.path.dirname(__file__), "../frontend/dist")
 index_html_path = os.path.join(frontend_build_dir, "index.html")
 
-# Catch-all route MUST come AFTER specific API routes and BEFORE the StaticFiles mount
-# It serves index.html for any path not matching an API route or a specific file
+# --- 1. Mount Static Files FIRST ---
+# This allows FastAPI to serve existing files like CSS, JS, images directly.
+# The 'directory' must exist. 'html=True' is optional but helps if you want '/about' to serve '/about.html'.
+# For SPA, we usually let the catch-all handle non-asset paths, so 'html=True' might not be strictly needed here.
+if os.path.exists(frontend_build_dir):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_dir, "assets")), name="assets")
+    # If you have other top-level static dirs like 'static', mount them too:
+    # app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_dir, "static")), name="static")
+    # Serve top-level files like manifest.json, sw.js, combine-logo.png etc. by mounting the root
+    # Use check_dir=False because we only want it to serve files, not list directories.
+    app.mount("/", StaticFiles(directory=frontend_build_dir, check_dir=False, html=False), name="root_static")
+
+    print(f"Mounted SPA static assets from: {frontend_build_dir}")
+else:
+    print(f"WARNING: Frontend build directory not found at {frontend_build_dir}. Frontend static files will not be served.")
+
+
+# --- 2. API Routes are defined above this section ---
+
+
+# --- 3. Catch-all Route LAST ---
+# This route is only reached if the path doesn't match an API route OR an existing static file.
+# It serves the main index.html file, allowing React Router to handle the frontend routing.
 @app.get("/{full_path:path}", response_class=FileResponse, include_in_schema=False)
 async def serve_react_app_catch_all(full_path: str):
-    print(f"[CatchAll Route] Attempting to serve index.html for path: /{full_path}")
+    print(f"[CatchAll Route] Path '/{full_path}' not found in API or static files. Serving index.html.")
+    # Check if index.html exists before serving
     if not os.path.exists(index_html_path):
         print(f"[CatchAll Route] ERROR: index.html not found at {index_html_path}")
-        raise HTTPException(status_code=404, detail="Frontend build (index.html) not found.")
-    print(f"[CatchAll Route] Serving index.html from {index_html_path}")
+        raise HTTPException(status_code=500, detail="Frontend entry point (index.html) not found.") # Use 500 for server config issue
     return FileResponse(index_html_path)
-
-# Mount the entire frontend build directory. 
-# IMPORTANT: This MUST be the *very last* app.mount or app.add_route call.
-# StaticFiles will try to find a file matching the path first.
-# If it doesn't find a file (e.g., /coaches), the request passes through.
-# Because the catch-all route is defined *before* this, the catch-all 
-# should handle non-file paths like /coaches and serve index.html.
-if os.path.exists(frontend_build_dir):
-    app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="spa")
-    print(f"Mounted SPA static files from: {frontend_build_dir}")
-else:
-    print(f"WARNING: Frontend build directory not found at {frontend_build_dir}. Frontend will not be served.")
 
 
 # --- Uvicorn Runner (for local development) ---
