@@ -22,6 +22,28 @@ const DRILL_TYPES = {
   AGILITY: "agility",
 };
 
+// --- NEW: Define Drill Categories ---
+const DRILL_CATEGORIES = {
+  'Speed': ['40m_dash'],
+  'Power': ['vertical_jump'],
+  'Skill': ['catching', 'throwing', 'agility']
+  // Add more drills to categories as needed
+};
+
+// Helper to get all drill keys from categories
+const ALL_DRILL_KEYS = Object.values(DRILL_CATEGORIES).flat();
+
+// Helper function to get category name from drill key
+const getCategoryForDrill = (drillKey) => {
+  for (const category in DRILL_CATEGORIES) {
+    if (DRILL_CATEGORIES[category].includes(drillKey)) {
+      return category;
+    }
+  }
+  return 'Other'; // Fallback category
+};
+// --- END NEW Drill Categories ---
+
 // Add this line at the top, outside the App function
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -68,6 +90,16 @@ function App() {
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [rankingsError, setRankingsError] = useState('');
   const AGE_GROUPS = ["", "6U", "8U", "10U", "12U", "14U"]; // Example age groups
+
+  // --- NEW: State for Rankings Table Column Visibility ---
+  // Initialize state based on ALL_DRILL_KEYS, default to true
+  const [visibleDrillColumns, setVisibleDrillColumns] = useState(
+    ALL_DRILL_KEYS.reduce((acc, key) => {
+      acc[key] = true; // Default all drills to visible
+      return acc;
+    }, {})
+  );
+  // --- END NEW Column Visibility State ---
 
   // --- Export State ---
   const [exportFormat, setExportFormat] = useState('csv'); // 'csv' or 'pdf'
@@ -838,6 +870,15 @@ function App() {
     }
   };
 
+  // --- NEW: Handler for Toggling Drill Column Visibility ---
+  const toggleDrillColumn = (drillKey) => {
+    setVisibleDrillColumns(prevState => ({
+      ...prevState,
+      [drillKey]: !prevState[drillKey],
+    }));
+  };
+  // --- END NEW Handler ---
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -1136,28 +1177,142 @@ function App() {
                 {rankingsLoading && <p>Loading rankings...</p>}
                 {rankingsError && <p className="message error">{rankingsError}</p>}
                 {!rankingsLoading && !rankingsError && rankings.length > 0 && (
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Name</th>
-                                <th>Number</th>
-                                <th>Age</th>
-                                <th>Composite Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rankings.map((player) => (
-                                <tr key={player.id}>
-                                    <td>{player.rank}</td>
-                                    <td>{player.name}</td>
-                                    <td>{player.number}</td>
-                                    <td>{player.age}</td>
-                                    <td>{player.composite_score.toFixed(2)}</td>
-                                </tr>
+                    <div className="rankings-table-container"> {/* NEW: Wrapper div */}
+                        {/* --- Desktop: Column Toggles (Grouped by Category) --- */}
+                        <div className="desktop-column-toggles">
+                            <span>Show/Hide Drills:</span>
+                            {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => (
+                                <div key={category} className="toggle-category-group">
+                                    <strong>{category}:</strong>
+                                    {drills.map(key => (
+                                        <label key={key} className={`toggle-label ${visibleDrillColumns[key] ? 'visible' : ''}`} title={`Toggle ${key.replace(/_/g, ' ').toUpperCase()}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={visibleDrillColumns[key] ?? false} // Handle potential undefined keys gracefully
+                                                onChange={() => toggleDrillColumn(key)}
+                                            />
+                                            {key.replace(/_/g, ' ').toUpperCase()}
+                                        </label>
+                                    ))}
+                                </div>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+
+                        {/* --- Desktop: Wide Table --- */}
+                        <table className="rankings-table desktop-view">
+                            <thead>
+                                {/* Row 1: Base Headers + Category Headers */}
+                                <tr>
+                                    <th rowSpan="2" className="sticky-col rank-col">Rank</th>
+                                    <th rowSpan="2" className="sticky-col name-col">Name</th>
+                                    <th rowSpan="2">Number</th>
+                                    <th rowSpan="2">Age</th>
+                                    <th rowSpan="2" title="Score calculated using default weightings across all recorded drills.">Composite Score</th>
+                                    {/* Category Headers */}
+                                    {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
+                                        const visibleDrillsInCategory = drills.filter(key => visibleDrillColumns[key]);
+                                        if (visibleDrillsInCategory.length === 0) return null; // Don't render category header if no drills are visible
+                                        return (
+                                            <th key={category} colSpan={visibleDrillsInCategory.length} className="category-header">
+                                                {category}
+                                            </th>
+                                        );
+                                    })}
+                                </tr>
+                                {/* Row 2: Individual Drill Headers */}
+                                <tr>
+                                    {ALL_DRILL_KEYS.map(key => (
+                                        visibleDrillColumns[key] && (
+                                            <th key={key} title={key.replace(/_/g, ' ').toUpperCase()} className="drill-header">
+                                                {/* Use abbreviation or shorter name if needed */}
+                                                {key.replace(/_/g, ' ').toUpperCase()}
+                                            </th>
+                                        )
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rankings.map((player) => (
+                                    <tr key={player.id}>
+                                        <td className="sticky-col rank-col">{player.rank}</td>
+                                        <td className="sticky-col name-col">{player.name}</td>
+                                        <td>{player.number}</td>
+                                        <td>{player.age}</td>
+                                        <td>{player.composite_score.toFixed(2)}</td>
+                                        {/* Drill Data Cells */}
+                                        {ALL_DRILL_KEYS.map(key => (
+                                            visibleDrillColumns[key] && (
+                                                <td key={key}>
+                                                    {/* Access drill data - adjust path if needed based on backend response */}
+                                                    {player.drills?.[key] !== undefined ? player.drills[key] : 'N/A'}
+                                                </td>
+                                            )
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                        {/* --- Mobile: Card View --- */}
+                        <div className="rankings-cards mobile-view">
+                            {rankings.map((player) => (
+                                <div key={player.id} className="player-card">
+                                    <div className="player-card-header">
+                                        <span className="rank">{player.rank}.</span>
+                                        <span className="name">{player.name}</span>
+                                        <span className="score">Score: {player.composite_score.toFixed(2)}</span>
+                                    </div>
+                                    <details className="player-card-details">
+                                        <summary>View Details</summary>
+                                        {/* Basic Info */}
+                                        <div className="card-section">
+                                            <p><strong>Number:</strong> {player.number}</p>
+                                            <p><strong>Age:</strong> {player.age}</p>
+                                        </div>
+                                        {/* Drills Grouped by Category */}
+                                        {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
+                                            // Filter drills for this category that exist in the player data
+                                            const relevantDrills = drills.filter(key => player.drills?.[key] !== undefined);
+                                            if (relevantDrills.length === 0) return null; // Don't show empty categories
+
+                                            return (
+                                                <div key={category} className="card-section">
+                                                    <h4 className="card-category-header">{category}</h4>
+                                                    {relevantDrills.map(key => (
+                                                        <p key={key}>
+                                                            <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                                                            {player.drills[key]} 
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })}
+                                        {/* --- NEW: Section for Other/Uncategorized Drills --- */}
+                                        {(() => {
+                                            const categorizedKeys = new Set(ALL_DRILL_KEYS);
+                                            const otherDrills = Object.keys(player.drills || {}).filter(key => !categorizedKeys.has(key));
+                                            
+                                            if (otherDrills.length > 0) {
+                                                return (
+                                                    <div key="other-drills" className="card-section">
+                                                        <h4 className="card-category-header">Other Drills</h4>
+                                                        {otherDrills.map(key => (
+                                                            <p key={key}>
+                                                                <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                                                                {player.drills[key]} 
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                        {/* --- END Other Drills Section --- */}
+                                    </details>
+                                </div>
+                            ))}
+                        </div>
+                    </div> // End rankings-table-container
                 )}
                 {!rankingsLoading && !rankingsError && rankings.length === 0 && (
                     <p>No players found or ranked in this age group.</p>

@@ -370,4 +370,278 @@ section {
 }
 
 
-/* --- End Coach Dashboard Table Enhancements --- */ 
+/* --- End Coach Dashboard Table Enhancements --- */
+
+/* --- NEW: Responsive Rankings Table Styles --- */
+
+/* --- Desktop Styles (Default, overridden by media query) --- */
+
+.rankings-table-container {
+  overflow-x: auto; /* Enable horizontal scroll on the container */
+  max-width: 100%;
+  position: relative; /* Needed for pseudo-element positioning */
+}
+
+/* --- NEW: Scroll Hint --- */
+.rankings-table-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 30px; /* Width of the fade */
+  background: linear-gradient(to left, rgba(243, 246, 249, 1), rgba(243, 246, 249, 0)); /* Fade from body background to transparent */
+  pointer-events: none; /* Allows clicking through the overlay */
+  /* Hide hint if no scrolling needed - Requires JS or more complex CSS */
+  /* Basic approach: assume scroll is usually needed on desktop */
+  display: block; 
+}
+
+@media (max-width: 767px) {
+  /* Hide scroll hint on mobile where container doesn't scroll */
+  .rankings-table-container::after {
+    display: none;
+  }
+  /* ... rest of mobile styles ... */
+}
+/* --- End Scroll Hint --- */
+
+.rankings-table {
+  width: 100%;
+  min-width: 800px; /* Ensure table is wide enough to need scroll */
+  border-collapse: collapse;
+  margin-top: 15px; 
+  white-space: nowrap;
+}
+
+.rankings-table th, 
+.rankings-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0; /* Vertical lines */
+  vertical-align: middle;
+}
+
+.rankings-table th:last-child, 
+.rankings-table td:last-child {
+  border-right: none;
+}
+
+.rankings-table thead th {
+  background-color: #e0f7fa;
+  position: sticky;
+  top: 0;
+  z-index: 10; 
+  border-bottom: 2px solid #00bcd4; 
+  text-align: center; /* Center headers */
+}
+
+/* --- NEW: Category Header Styles --- */
+.rankings-table thead th.category-header {
+  background-color: #cceeff; /* Slightly darker shade for category */
+  border-bottom: 1px solid #00bcd4; /* Lighter border */
+  /* Category headers stick to the top, below the main sticky header */
+  top: 0; /* Adjust if you have multiple sticky header rows */
+  z-index: 11; /* Above normal cells but below Rank/Name headers */
+}
+
+/* --- NEW: Individual Drill Header Styles --- */
+.rankings-table thead th.drill-header {
+  background-color: #e0f7fa; /* Match main header background */
+  font-weight: normal; /* Less emphasis than main headers */
+  font-size: 0.9em;
+  /* Drill headers stick below category headers */
+  top: 38px; /* Approx height of one header row, adjust as needed */
+  z-index: 9; /* Below category headers */
+  border-bottom: 2px solid #00bcd4;
+  /* NEW: Adaptive width */
+  max-width: 120px; /* Adjust as needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; 
+}
+
+/* Sticky Columns: Rank (1) and Name (2) */
+.rankings-table th.sticky-col, 
+.rankings-table td.sticky-col {
+  position: sticky;
+  background-color: #eafbff; /* Slightly different background */
+  z-index: 5; 
+}
+
+.rankings-table thead th.sticky-col {
+  background-color: #e0f7fa; /* Match sticky header */
+  z-index: 15; 
+}
+
+.rankings-table .rank-col {
+  left: 0;
+  min-width: 60px;
+  width: 60px;
+  text-align: center;
+}
+
+.rankings-table .name-col {
+  left: 60px; /* Position after rank column (width 60px) */
+  min-width: 150px;
+  width: 150px;
+  border-right: 2px solid #00bcd4; /* Divider */
+}
+
+.rankings-table tbody tr:hover td {
+  background-color: #f0f8ff; /* Optional: hover effect */
+}
+/* Ensure sticky backgrounds are maintained on hover */
+.rankings-table tbody tr:hover td.sticky-col {
+  background-color: #eafbff;
+}
+
+.desktop-column-toggles {
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.desktop-column-toggles label {
+  display: inline-block; /* Keep labels inline */
+  margin-right: 15px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.desktop-column-toggles input[type="checkbox"] {
+  width: auto; /* Override default width */
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* --- NEW: Style for toggle groups --- */
+.toggle-category-group {
+  margin-right: 20px; 
+  display: inline-block; /* Or flex */
+  vertical-align: top; 
+}
+.toggle-category-group strong {
+  margin-right: 10px;
+}
+
+/* --- NEW: Highlighting for visible toggles --- */
+.desktop-column-toggles label.visible {
+  background-color: #d4edda; /* Light green background */
+  border: 1px solid #c3e6cb;
+}
+.desktop-column-toggles label:not(.visible) {
+  opacity: 0.7; /* Slightly dim unchecked labels */
+}
+
+/* Hide Mobile View by default */
+.mobile-view {
+  display: none;
+}
+
+/* --- Mobile Styles (< 768px) --- */
+@media (max-width: 767px) {
+  /* Hide Desktop table & toggles on mobile */
+  .desktop-view,
+  .desktop-column-toggles {
+    display: none;
+  }
+
+  /* Show Mobile Card View */
+  .mobile-view {
+    display: block;
+  }
+
+  .rankings-table-container {
+    overflow-x: visible; /* Disable horizontal scroll for mobile */
+  }
+
+  .player-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .player-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .player-card .rank {
+    font-size: 1.1em;
+    color: #00bcd4;
+    margin-right: 10px;
+  }
+
+  .player-card .name {
+    flex-grow: 1;
+    font-size: 1em;
+  }
+
+  .player-card .score {
+    font-size: 0.9em;
+    color: #555;
+  }
+
+  .player-card-details {
+    font-size: 0.9em;
+  }
+
+  .player-card-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #007bff;
+    padding: 5px 0;
+    outline: none; /* Remove default focus outline */
+  }
+  
+  /* Style details content */
+  .player-card-details p {
+    margin: 5px 0 5px 15px; /* Indent details */
+    line-height: 1.4;
+  }
+
+  .player-card-details p strong {
+    color: #333;
+  }
+  
+}
+
+/* --- NEW: Mobile Card Category Styles --- */
+.card-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  margin-bottom: 15px; /* NEW: Add bottom margin */
+}
+.card-section:last-child {
+    margin-bottom: 0; /* Remove margin from last section */
+}
+.card-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none; 
+}
+.card-category-header {
+  font-size: 0.95em;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.player-card-details p {
+  margin: 5px 0 5px 15px; /* Indent details */
+} 
