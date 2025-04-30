@@ -1075,38 +1075,33 @@ async def delete_player(
 # Define the path to the frontend build directory relative to this file
 # ../frontend/dist
 frontend_build_dir = os.path.join(os.path.dirname(__file__), "../frontend/dist")
+assets_dir = os.path.join(frontend_build_dir, "assets")
 index_html_path = os.path.join(frontend_build_dir, "index.html")
 
-# --- 1. Mount Static Files FIRST ---
-# This allows FastAPI to serve existing files like CSS, JS, images directly.
-# The 'directory' must exist. 'html=True' is optional but helps if you want '/about' to serve '/about.html'.
-# For SPA, we usually let the catch-all handle non-asset paths, so 'html=True' might not be strictly needed here.
-if os.path.exists(frontend_build_dir):
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_dir, "assets")), name="assets")
-    # If you have other top-level static dirs like 'static', mount them too:
-    # app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_dir, "static")), name="static")
-    # Serve top-level files like manifest.json, sw.js, combine-logo.png etc. by mounting the root
-    # Use check_dir=False because we only want it to serve files, not list directories.
-    app.mount("/", StaticFiles(directory=frontend_build_dir, check_dir=False, html=False), name="root_static")
-
-    print(f"Mounted SPA static assets from: {frontend_build_dir}")
+# --- 1. Mount Specific Asset Directories FIRST ---
+# Only mount known directories containing static assets (CSS, JS, images).
+if os.path.exists(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    print(f"Mounted SPA static assets from: {assets_dir}")
+# Add other specific mounts if needed (e.g., /static)
+# elif os.path.exists(os.path.join(frontend_build_dir, "static")):
+#     app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_dir, "static")), name="static")
 else:
-    print(f"WARNING: Frontend build directory not found at {frontend_build_dir}. Frontend static files will not be served.")
-
+    print(f"WARNING: Frontend assets directory not found at {assets_dir}. Frontend assets might not load.")
 
 # --- 2. API Routes are defined above this section ---
-
+# Ensure @app.get("/") is defined above if you want a specific root API response.
 
 # --- 3. Catch-all Route LAST ---
-# This route is only reached if the path doesn't match an API route OR an existing static file.
-# It serves the main index.html file, allowing React Router to handle the frontend routing.
+# This route handles all other paths (including "/", "/coaches", etc.)
+# by serving the main index.html file for the SPA.
 @app.get("/{full_path:path}", response_class=FileResponse, include_in_schema=False)
 async def serve_react_app_catch_all(full_path: str):
-    print(f"[CatchAll Route] Path '/{full_path}' not found in API or static files. Serving index.html.")
+    print(f"[CatchAll Route] Path '/{full_path}' not found in API or static assets. Serving index.html.")
     # Check if index.html exists before serving
     if not os.path.exists(index_html_path):
         print(f"[CatchAll Route] ERROR: index.html not found at {index_html_path}")
-        raise HTTPException(status_code=500, detail="Frontend entry point (index.html) not found.") # Use 500 for server config issue
+        raise HTTPException(status_code=500, detail="Frontend entry point (index.html) not found.")
     return FileResponse(index_html_path)
 
 
