@@ -456,12 +456,35 @@ async def create_drill_result(
         print(f"Error creating drill result: {e}")
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
-# New: Get list of all players
-@app.get("/players/", response_model=List[PlayerRead])
+# New: Get list of all players (MODIFIED TO INCLUDE COMPOSITE SCORE)
+@app.get("/players/", response_model=List[PlayerSummaryRead]) # <-- MODIFIED response_model
 async def read_players(session: AsyncSession = Depends(get_session)):
+    """Gets a list of all players, including their calculated official composite score."""
     result = await session.execute(select(Player))
     players = result.scalars().all()
-    return players
+
+    player_summaries = []
+    for player in players:
+        try:
+            # Calculate score using the existing async function (assuming default weights)
+            composite_score, _, _ = await calculate_composite_score(player.id, session)
+            # Create the summary object
+            player_data = player.model_dump() # Get player data as dict
+            player_data['composite_score'] = composite_score # Add the calculated score
+            player_summaries.append(PlayerSummaryRead(**player_data)) # Validate and append
+        except Exception as e:
+            # Log error if score calculation fails for a player
+            logging.error(f"Error calculating composite score for player {player.id} ({player.name}) in read_players: {e}")
+            # Optionally, decide how to handle this:
+            # 1. Skip the player: continue
+            # 2. Return player with score 0 or None (if model allows Optional):
+            #    player_data = player.model_dump()
+            #    player_data['composite_score'] = 0.0 # Or None if field is Optional[float]
+            #    player_summaries.append(PlayerSummaryRead(**player_data))
+            # For now, let's skip the player to avoid potentially misleading data
+            continue
+
+    return player_summaries
 
 # New: Get drill results for a specific player
 @app.get("/players/{player_id}/results/", response_model=List[DrillResultRead])

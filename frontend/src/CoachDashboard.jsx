@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css'; // Reuse existing styles if applicable
+import { saveAs } from 'file-saver'; // Import file-saver
 
 // Assuming API_BASE_URL is defined similarly or passed as prop/context
 // Use environment variable or hardcode temporarily if needed
@@ -120,8 +121,8 @@ function CoachDashboard() {
     // 2. Calculate custom composite scores for filtered players
     const playersWithScores = filteredPlayers.map(player => ({
       ...player,
-      customCompositeScore: calculateCustomCompositeScore(player.id)
-      // TODO: Add official composite score if needed later
+      customCompositeScore: calculateCustomCompositeScore(player.id),
+      officialCompositeScore: player.composite_score // Assume backend sends 'composite_score'
     }));
     
     // 3. Sort the scored players by custom score
@@ -145,6 +146,65 @@ function CoachDashboard() {
   // New handler for age group filter change
   const handleAgeGroupChange = (event) => {
     setSelectedAgeGroup(event.target.value);
+  };
+
+  // --- NEW: CSV Export Handler ---
+  const handleExportCustomCsv = () => {
+    if (!filteredAndSortedPlayers.length) {
+      alert("No players to export in the current view.");
+      return;
+    }
+
+    const headers = [
+      "Rank",
+      "Name",
+      "Number",
+      "Age Group",
+      "Custom Composite Score",
+      "Official Composite Score",
+      ...Object.values(DRILL_TYPES).map(dt => `${dt.replace(/_/g, ' ').toUpperCase()} (Normalized Score)`) // Dynamic drill headers
+    ];
+
+    // Prepare data rows
+    const rows = filteredAndSortedPlayers.map((player, index) => {
+      const playerResults = drillResults[player.id] || [];
+      const bestNormalizedScores = {};
+      playerResults.forEach(result => {
+        if (result.normalized_score !== null) {
+          const currentBest = bestNormalizedScores[result.drill_type] || -1;
+          if (result.normalized_score > currentBest) {
+            bestNormalizedScores[result.drill_type] = result.normalized_score;
+          }
+        }
+      });
+
+      const rowData = [
+        index + 1, // Rank
+        player.name,
+        player.number || 'N/A',
+        player.age_group,
+        player.customCompositeScore.toFixed(2),
+        player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
+          ? player.officialCompositeScore.toFixed(2) 
+          : 'N/A',
+        // Add normalized scores for each drill type
+        ...Object.values(DRILL_TYPES).map(drillType => 
+          bestNormalizedScores[drillType] !== undefined ? bestNormalizedScores[drillType].toFixed(0) : '0' // Use 0 if not attempted/scored
+        )
+      ];
+      return rowData;
+    });
+
+    // Convert to CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")) // Handle potential commas/quotes in fields
+    ].join("\n");
+
+    // Create Blob and trigger download using file-saver
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const filename = `custom_rankings_${selectedAgeGroup}_${new Date().toISOString().split('T')[0]}.csv`;
+    saveAs(blob, filename);
   };
 
   // --- Render Logic ---
@@ -209,6 +269,18 @@ function CoachDashboard() {
           </select>
         </div>
 
+        {/* --- NEW: Export Button --- */}
+        <div style={{ marginBottom: '15px' }}>
+          <button 
+            onClick={handleExportCustomCsv} 
+            disabled={filteredAndSortedPlayers.length === 0}
+            className="button button-secondary"
+          >
+            Download Custom Rankings (.CSV)
+          </button>
+        </div>
+        {/* --- End Export Button --- */}
+
         {filteredAndSortedPlayers.length > 0 ? (
           <table>
             <thead>
@@ -217,8 +289,8 @@ function CoachDashboard() {
                 <th>Name</th>
                 <th>Number</th>
                 <th>Age Group</th>
-                {/* Add official score header later if needed */}
                 <th>Custom Composite Score</th>
+                <th>Official Score</th>
                 {/* Optionally add raw scores here if needed */}
               </tr>
             </thead>
@@ -230,8 +302,12 @@ function CoachDashboard() {
                   <td>{player.name}</td>
                   <td>{player.number || 'N/A'}</td>
                   <td>{player.age_group}</td>
-                  {/* Add official score data cell later if needed */}
                   <td>{player.customCompositeScore.toFixed(2)}</td> 
+                  <td style={{ fontSize: '0.9em', color: '#666' }}>
+                    {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
+                      ? player.officialCompositeScore.toFixed(2) 
+                      : 'N/A'}
+                  </td>
                 </tr>
               ))}
             </tbody>

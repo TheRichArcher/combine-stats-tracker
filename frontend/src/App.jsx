@@ -97,6 +97,12 @@ function App() {
   const [isTransferring, setIsTransferring] = useState(false);
   // --- <<< END NEW TRANSFER STATE >>> ---
 
+  // State for Admin Password Protection
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false); // Track if admin section is unlocked
+  const [showAdminPasswordPrompt, setShowAdminPasswordPrompt] = useState(false); // Show/hide password input
+  const [adminPasswordInput, setAdminPasswordInput] = useState(''); // Current password input value
+  const [adminPasswordError, setAdminPasswordError] = useState(''); // Error message for incorrect password
+
   // --- Effects for Auto-clearing CSV Messages ---
   useEffect(() => {
     let summaryTimer;
@@ -819,6 +825,19 @@ function App() {
   };
   // --- <<< END NEW DELETE HANDLER >>> ---
 
+  const handleAdminPasswordSubmit = (e) => {
+    e.preventDefault();
+    // TODO: Move password to env variable or config later
+    if (adminPasswordInput === 'combine!') {
+        setIsAdminUnlocked(true);
+        setShowAdminPasswordPrompt(false);
+        setAdminPasswordError('');
+        setAdminPasswordInput(''); // Clear input on success
+    } else {
+        setAdminPasswordError('Incorrect password.');
+    }
+  };
+
   // --- Render --- 
   return (
     <div className="App container">
@@ -1191,91 +1210,130 @@ function App() {
 
       {/* --- NEW: Combined & Collapsible Admin Tools Section --- */}
       <div className="admin-tools-container" style={{ marginTop: '30px', borderTop: '2px solid #eee', paddingTop: '15px' }}>
-        <button
-          onClick={() => setIsAdminSectionVisible(!isAdminSectionVisible)}
-          className="button-link-style" // Use link style for low emphasis
-        >
-          {isAdminSectionVisible ? 'Hide Admin Tools ▲' : 'Show Admin Tools ▼'}
-        </button>
+        {!isAdminUnlocked && !showAdminPasswordPrompt && (
+          <button
+            onClick={() => { setShowAdminPasswordPrompt(true); setAdminPasswordError(''); }} // Show prompt on click
+            className="button-link-style" // Use link style for low emphasis
+          >
+            Show Admin Tools ▼
+          </button>
+        )}
 
-        {isAdminSectionVisible && (
-          <div style={{ marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #eee' }}>
-            {/* --- MOVED: CSV Upload SECTION --- */}
-            <div className="collapsible-section" style={{ padding: '15px', marginTop: '10px', backgroundColor: '#f9f9f9', border: '1px solid #ddd' }}>
-              <button 
-                onClick={() => setIsCsvSectionVisible(!isCsvSectionVisible)}
-                className="button-link-style" // Also use link style here
-                style={{ marginBottom: '10px', fontWeight: 'bold' }}
-              >
-                {isCsvSectionVisible ? 'Hide Bulk Upload Tool ▲' : 'Show Bulk Upload Tool ▼'}
-              </button>
-              {isCsvSectionVisible && (
-                <div className="form-section" style={{ marginTop: '0', paddingTop: '10px', borderTop: '1px solid #eee' }}>
-                  <h3 style={{ fontSize: '1.1em', marginBottom: '10px' }}>Upload Players via CSV</h3>
-                  <form onSubmit={handleCsvUpload}>
-                    <div>
-                      <label htmlFor="csvFileInput">Select CSV File:</label>
-                      <input
-                        type="file"
-                        id="csvFileInput"
-                        accept=".csv"
-                        onChange={handleCsvFileChange}
-                      />
-                    </div>
-                    <button type="submit" disabled={isUploadingCsv || !csvFile} className="button button-small">
-                      {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+        {/* --- Password Prompt Form --- */}
+        {showAdminPasswordPrompt && !isAdminUnlocked && (
+          <form onSubmit={handleAdminPasswordSubmit} style={{ marginBottom: '10px', paddingLeft: '10px' }}>
+            <label htmlFor="adminPassword" style={{ marginRight: '5px' }}>Admin Password:</label>
+            <input
+              type="password"
+              id="adminPassword"
+              value={adminPasswordInput}
+              onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminPasswordError(''); }}
+              required
+              style={{ marginRight: '5px' }}
+            />
+            <button type="submit" className="button button-small">Unlock</button>
+            <button 
+              type="button" 
+              onClick={() => { setShowAdminPasswordPrompt(false); setAdminPasswordInput(''); setAdminPasswordError(''); }} 
+              className="button button-small button-secondary" 
+              style={{ marginLeft: '5px' }}
+            >
+              Cancel
+            </button>
+            {adminPasswordError && <p className="message error" style={{ fontSize: '0.9em', marginTop: '5px' }}>{adminPasswordError}</p>}
+          </form>
+        )}
+
+        {/* --- Admin Tools Content (Only shown when unlocked) --- */}
+        {isAdminUnlocked && (
+          <>
+            {/* Button to HIDE tools again (optional, could just rely on refresh) */}
+            <button
+              onClick={() => setIsAdminUnlocked(false)} // Simple hide, requires password again
+              className="button-link-style"
+              style={{ marginBottom: '10px' }}
+            >
+              Hide Admin Tools ▲
+            </button>
+
+            <div style={{ marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #eee' }}>
+              {/* --- MOVED: CSV Upload SECTION --- */}
+              <div className="collapsible-section" style={{ padding: '15px', marginTop: '10px', backgroundColor: '#f9f9f9', border: '1px solid #ddd' }}>
+                <button 
+                  onClick={() => setIsCsvSectionVisible(!isCsvSectionVisible)}
+                  className="button-link-style" // Also use link style here
+                  style={{ marginBottom: '10px', fontWeight: 'bold' }}
+                >
+                  {isCsvSectionVisible ? 'Hide Bulk Upload Tool ▲' : 'Show Bulk Upload Tool ▼'}
+                </button>
+                {isCsvSectionVisible && (
+                  <div className="form-section" style={{ marginTop: '0', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                    <h3 style={{ fontSize: '1.1em', marginBottom: '10px' }}>Upload Players via CSV</h3>
+                    <form onSubmit={handleCsvUpload}>
+                      <div>
+                        <label htmlFor="csvFileInput">Select CSV File:</label>
+                        <input
+                          type="file"
+                          id="csvFileInput"
+                          accept=".csv"
+                          onChange={handleCsvFileChange}
+                        />
+                      </div>
+                      <button type="submit" disabled={isUploadingCsv || !csvFile} className="button button-small">
+                        {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+                      </button>
+                    </form>
+                    {uploadError && <p className="message error">{uploadError}</p>}
+                    {uploadSummary && (
+                      <div className="message summary">
+                        <h4>Upload Summary</h4>
+                        <p>Processed Rows: {uploadSummary.processed_rows}</p>
+                        <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
+                        <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
+                        {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
+                          <div>
+                            <h5>Skipped Row Details:</h5>
+                            <ul>
+                              {uploadSummary.skipped_details.map((skip, index) => (
+                                <li key={index} style={{fontSize: '0.9em'}}>Row {skip.row}: {skip.reason}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* --- End MOVED CSV Upload Section --- */}
+
+              {/* --- MOVED: Player Reset Section (Now Collapsible) --- */}
+              <div style={{ marginTop: '20px' }}> {/* Container for the reset toggle and section */} 
+                <button 
+                  onClick={() => setShowResetTool(!showResetTool)}
+                  className="button-link-style" // Use link style for low emphasis
+                  style={{ marginBottom: '10px' }}
+                >
+                  {showResetTool ? 'Hide Reset Tool ▲' : 'Show Reset Tool ▼'}
+                </button>
+
+                {showResetTool && (
+                  <section className="admin-section" style={{marginTop: '5px'}}> {/* Keep original styling, reduce top margin */} 
+                    <h4>Reset Data</h4>
+                    <p>Warning: This action is permanent and cannot be undone.</p>
+                    <button
+                      onClick={openResetModal}
+                      className="button button-danger button-small" // Keep existing danger/small style
+                      disabled={isResetting}
+                    >
+                      {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
                     </button>
-                  </form>
-                  {uploadError && <p className="message error">{uploadError}</p>}
-                  {uploadSummary && (
-                    <div className="message summary">
-                      <h4>Upload Summary</h4>
-                      <p>Processed Rows: {uploadSummary.processed_rows}</p>
-                      <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
-                      <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
-                      {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
-                        <div>
-                          <h5>Skipped Row Details:</h5>
-                          <ul>
-                            {uploadSummary.skipped_details.map((skip, index) => (
-                              <li key={index} style={{fontSize: '0.9em'}}>Row {skip.row}: {skip.reason}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                  </section>
+                )}
+              </div>
+              {/* --- End MOVED Player Reset Section --- */}
             </div>
-            {/* --- End MOVED CSV Upload Section --- */}
-
-            {/* --- MOVED: Player Reset Section (Now Collapsible) --- */}
-            <div style={{ marginTop: '20px' }}> {/* Container for the reset toggle and section */} 
-              <button 
-                onClick={() => setShowResetTool(!showResetTool)}
-                className="button-link-style" // Use link style for low emphasis
-                style={{ marginBottom: '10px' }}
-              >
-                {showResetTool ? 'Hide Reset Tool ▲' : 'Show Reset Tool ▼'}
-              </button>
-
-              {showResetTool && (
-                <section className="admin-section" style={{marginTop: '5px'}}> {/* Keep original styling, reduce top margin */} 
-                  <h4>Reset Data</h4>
-                  <p>Warning: This action is permanent and cannot be undone.</p>
-                  <button
-                    onClick={openResetModal}
-                    className="button button-danger button-small" // Keep existing danger/small style
-                    disabled={isResetting}
-                  >
-                    {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
-                  </button>
-                </section>
-              )}
-            </div>
-            {/* --- End MOVED Player Reset Section --- */}
-          </div>
+          </>
         )}
       </div>
       {/* --- End Combined Admin Tools Section --- */}
