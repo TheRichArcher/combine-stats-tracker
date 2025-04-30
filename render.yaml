@@ -9,7 +9,7 @@ services:
     routes:
       - type: rewrite
         source: /*
-        destination: /
+        destination: /index.html
     # Filter to trigger builds on frontend or backend changes
     buildFilter:
       paths:
