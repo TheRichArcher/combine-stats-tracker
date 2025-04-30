@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import App from './App';
-import CoachDashboard from './CoachDashboard';
-import PasswordGate from './PasswordGate';
-import './App.css';
+import CoachesView from './components/CoachesView';
+import PlayerDetail from './components/PlayerDetail';
+import UploadPlayers from './components/UploadPlayers';
+import './index.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -16,18 +17,13 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route 
-          path="/" 
-          element={
-            <PasswordGate>
-              <App />
-            </PasswordGate>
-          }
-        />
-        <Route path="/coaches" element={<CoachDashboard />} />
+        <Route path="/" element={<App />} />
+        <Route path="/coaches" element={<CoachesView />} />
+        <Route path="/players/:playerId" element={<PlayerDetail />} />
+        <Route path="/upload-players" element={<UploadPlayers />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   </React.StrictMode>
 ); 
