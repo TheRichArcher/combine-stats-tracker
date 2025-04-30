@@ -259,4 +259,115 @@ section {
   margin-top: 20px;
 }
 
-/* --- End NEW Modal Styles --- */ 
+/* --- End NEW Modal Styles --- */
+
+/* --- Coach Dashboard Table Enhancements --- */
+
+.table-container {
+  overflow-x: auto; /* Enable horizontal scroll */
+  max-width: 100%;    /* Ensure it doesn't overflow its container */
+  border: 1px solid #e2e8f0; /* Optional: border around the scrollable area */
+  border-radius: 8px; /* Match other elements */
+  margin-top: 20px;
+}
+
+.table-container table { 
+  /* Removed width: 100% here, let the container handle width and scrolling */
+  border-collapse: collapse; /* Kept */
+  white-space: nowrap;    /* Prevent text wrapping in cells */
+  min-width: 800px; /* Example: ensure table has a minimum width */
+}
+
+.table-container th,
+.table-container td {
+  padding: 12px 15px; /* Slightly more padding */
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0; /* Add right border for grid look */
+}
+.table-container th:last-child,
+.table-container td:last-child {
+  border-right: none; /* Remove right border on last cell */
+}
+
+.table-container thead th {
+  background-color: #e0f7fa; /* Existing header color */
+  position: sticky; /* Make header sticky */
+  top: 0;          /* Stick to the top */
+  z-index: 10;      /* Ensure header is above body content */
+  border-bottom: 2px solid #00bcd4; /* Stronger border below header */
+}
+
+/* Sticky Columns (Rank and Name) */
+.table-container thead th:nth-child(1),
+.table-container tbody td:nth-child(1),
+.table-container thead th:nth-child(2),
+.table-container tbody td:nth-child(2) {
+  position: sticky;
+  left: 0;
+  background-color: #e0f7fa; /* Match header or use a slightly different shade */
+  z-index: 5;
+}
+
+/* Specifically for the Name column, need to adjust its left position */
+.table-container thead th:nth-child(2),
+.table-container tbody td:nth-child(2) {
+  /* Assuming Rank column has a certain width, adjust this value */
+  /* We might need JS to calculate this accurately, but let's try a fixed value */
+  left: 60px; /* Adjust this based on Rank column width */
+  /* Add a border to visually separate sticky columns */
+  border-right: 2px solid #00bcd4; 
+}
+
+/* Ensure the sticky header cells for sticky columns have higher z-index */
+.table-container thead th:nth-child(1),
+.table-container thead th:nth-child(2) {
+  z-index: 15;
+}
+
+/* Alternating Row Colors */
+.table-container tbody tr:nth-child(even) {
+  background-color: #f8f9fa; /* Lighter shade for even rows */
+}
+
+/* Optional: Slightly different background for sticky columns in body */
+.table-container tbody td:nth-child(1),
+.table-container tbody td:nth-child(2) {
+  background-color: #f0f9ff; /* Slightly different light shade */
+}
+
+/* Ensure sticky column background overrides alternating row color */
+.table-container tbody tr:nth-child(even) td:nth-child(1),
+.table-container tbody tr:nth-child(even) td:nth-child(2) {
+  background-color: #f0f9ff; /* Same as odd rows sticky columns */
+}
+
+/* Improve alignment and spacing */
+.table-container td {
+  vertical-align: middle;
+}
+
+/* Highlight Composite Score Columns (optional) */
+.table-container th:nth-child(5), /* Custom Composite */
+.table-container td:nth-child(5),
+.table-container th:nth-child(6), /* Official Score */
+.table-container td:nth-child(6) {
+  background-color: #f0fff4; /* Very light green, adjust as needed */
+}
+
+/* Ensure sticky header/column backgrounds override this highlight */
+.table-container thead th:nth-child(1),
+.table-container thead th:nth-child(2) {
+  background-color: #e0f7fa;
+}
+.table-container tbody td:nth-child(1),
+.table-container tbody td:nth-child(2) {
+  background-color: #f0f9ff;
+}
+.table-container tbody tr:nth-child(even) td:nth-child(1),
+.table-container tbody tr:nth-child(even) td:nth-child(2) {
+  background-color: #f0f9ff;
+}
+
+
+/* --- End Coach Dashboard Table Enhancements --- */ 

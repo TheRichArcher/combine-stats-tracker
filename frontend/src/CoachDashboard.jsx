@@ -282,59 +282,61 @@ function CoachDashboard() {
         {/* --- End Export Button --- */}
 
         {filteredAndSortedPlayers.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Name</th>
-                <th>Number</th>
-                <th>Age Group</th>
-                <th>Custom Composite Score</th>
-                <th>Official Score</th>
-                {/* Add headers for each drill type */}
-                {Object.values(DRILL_TYPES).map(drillType => (
-                  <th key={drillType}>{drillType.replace(/_/g, ' ').toUpperCase()}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {/* Use the filtered and sorted list */}
-              {filteredAndSortedPlayers.map((player, index) => {
-                // Extract best normalized scores for this player (similar to export logic)
-                const playerResults = drillResults[player.id] || [];
-                const bestNormalizedScores = {};
-                playerResults.forEach(result => {
-                  if (result.normalized_score !== null) {
-                    const currentBest = bestNormalizedScores[result.drill_type] || -1;
-                    if (result.normalized_score > currentBest) {
-                      bestNormalizedScores[result.drill_type] = result.normalized_score;
+          <div className="table-container"> {/* Add wrapper div */}
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Number</th>
+                  <th>Age Group</th>
+                  <th>Custom Composite Score</th>
+                  <th>Official Score</th>
+                  {/* Add headers for each drill type */}
+                  {Object.values(DRILL_TYPES).map(drillType => (
+                    <th key={drillType}>{drillType.replace(/_/g, ' ').toUpperCase()}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* Use the filtered and sorted list */}
+                {filteredAndSortedPlayers.map((player, index) => {
+                  // Extract best normalized scores for this player (similar to export logic)
+                  const playerResults = drillResults[player.id] || [];
+                  const bestNormalizedScores = {};
+                  playerResults.forEach(result => {
+                    if (result.normalized_score !== null) {
+                      const currentBest = bestNormalizedScores[result.drill_type] || -1;
+                      if (result.normalized_score > currentBest) {
+                        bestNormalizedScores[result.drill_type] = result.normalized_score;
+                      }
                     }
-                  }
-                });
+                  });
 
-                return (
-                  <tr key={player.id}>
-                    <td>{index + 1}</td> {/* Rank based on current filter/sort */} 
-                    <td>{player.name}</td>
-                    <td>{player.number || 'N/A'}</td>
-                    <td>{player.age_group}</td>
-                    <td>{player.customCompositeScore.toFixed(2)}</td> 
-                    <td style={{ fontSize: '0.9em', color: '#666' }}>
-                      {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
-                        ? player.officialCompositeScore.toFixed(2) 
-                        : 'N/A'}
-                    </td>
-                    {/* Add data cells for each drill score */}
-                    {Object.values(DRILL_TYPES).map(drillType => (
-                      <td key={`${player.id}-${drillType}`}>
-                        {bestNormalizedScores[drillType] !== undefined ? bestNormalizedScores[drillType].toFixed(0) : '0'}
+                  return (
+                    <tr key={player.id}>
+                      <td>{index + 1}</td> {/* Rank based on current filter/sort */} 
+                      <td>{player.name}</td>
+                      <td>{player.number || 'N/A'}</td>
+                      <td>{player.age_group}</td>
+                      <td>{player.customCompositeScore.toFixed(2)}</td> 
+                      <td style={{ fontSize: '0.9em', color: '#666' }}>
+                        {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
+                          ? player.officialCompositeScore.toFixed(2) 
+                          : 'N/A'}
                       </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* Add data cells for each drill score */}
+                      {Object.values(DRILL_TYPES).map(drillType => (
+                        <td key={`${player.id}-${drillType}`}>
+                          {bestNormalizedScores[drillType] !== undefined ? bestNormalizedScores[drillType].toFixed(0) : '0'}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div> /* Close wrapper div */
         ) : (
           <p>No players found{selectedAgeGroup !== 'All' ? ` for age group ${selectedAgeGroup}` : ''}.</p>
         )}
