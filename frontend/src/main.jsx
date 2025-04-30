@@ -2,9 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import App from './App';
-import CoachesView from './components/CoachesView';
-import PlayerDetail from './components/PlayerDetail';
-import UploadPlayers from './components/UploadPlayers';
+import CoachesView from './CoachDashboard';
+// import PlayerDetail from './components/PlayerDetail';
+// import UploadPlayers from './components/UploadPlayers';
 import './index.css';
 
 if ('serviceWorker' in navigator) {
@@ -21,8 +21,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/coaches" element={<CoachesView />} />
-        <Route path="/players/:playerId" element={<PlayerDetail />} />
-        <Route path="/upload-players" element={<UploadPlayers />} />
+        {/* Remove routes for components handled within App.jsx */}
+        {/* <Route path="/players/:playerId" element={<PlayerDetail />} /> */}
+        {/* <Route path="/upload-players" element={<UploadPlayers />} /> */}
       </Routes>
     </Router>
   </React.StrictMode>
