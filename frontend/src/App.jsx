@@ -933,58 +933,60 @@ function App() {
         )}
       </div>
 
-      {/* Drill Result Entry Form */}
-      <div className="form-section">
-        <h1>Enter Drill Result</h1>
-        <form onSubmit={handleDrillSubmit}>
-            <div>
-                <label htmlFor="playerId">Player Number:</label>
-                <input
-                    type="number"
-                    id="playerId"
-                    value={playerId}
-                    onChange={(e) => setPlayerId(e.target.value)}
-                    required
-                />
-                {/* Add matched player display below input */}
-                {playerId && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
-                    {matchedPlayer
-                      ? <span style={{ fontWeight: 'bold', color: 'green' }}>✅ Matched: {matchedPlayer.name}</span>
-                      : <span style={{ fontWeight: 'bold', color: 'red' }}>❌ No player found with this number</span>}
-                  </div>
-                )}
-            </div>
-            <div>
-                <label htmlFor="drillType">Drill Type:</label>
-                <select
-                    id="drillType"
-                    value={drillType}
-                    onChange={(e) => setDrillType(e.target.value)}
-                    required
-                >
-                    {Object.entries(DRILL_TYPES).map(([key, value]) => (
-                        <option key={key} value={value}>{value.replace(/_/g, ' ').toUpperCase()}</option>
-                    ))}
-                </select>
-            </div>
-            <div>
-                <label htmlFor="rawScore">Raw Score:</label>
-                <input
-                    type="number"
-                    id="rawScore"
-                    value={rawScore}
-                    onChange={(e) => setRawScore(e.target.value)}
-                    step="any" // Allow decimals
-                    required
-                />
-            </div>
-            <button type="submit" disabled={isSubmittingDrill}>
-                {isSubmittingDrill ? 'Submitting...' : 'Record Drill Result'}
-            </button>
-        </form>
-        {drillMessage && <p className="message">{drillMessage}</p>}
-      </div>
+      {/* Drill Result Entry Form - Only show if admin is unlocked */}
+      {isAdminUnlocked && (
+        <div className="form-section">
+          <h1>Enter Drill Result</h1>
+          <form onSubmit={handleDrillSubmit}>
+              <div>
+                  <label htmlFor="playerId">Player Number:</label>
+                  <input
+                      type="number"
+                      id="playerId"
+                      value={playerId}
+                      onChange={(e) => setPlayerId(e.target.value)}
+                      required
+                  />
+                  {/* Add matched player display below input */}
+                  {playerId && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
+                      {matchedPlayer
+                        ? <span style={{ fontWeight: 'bold', color: 'green' }}>✅ Matched: {matchedPlayer.name}</span>
+                        : <span style={{ fontWeight: 'bold', color: 'red' }}>❌ No player found with this number</span>}
+                    </div>
+                  )}
+              </div>
+              <div>
+                  <label htmlFor="drillType">Drill Type:</label>
+                  <select
+                      id="drillType"
+                      value={drillType}
+                      onChange={(e) => setDrillType(e.target.value)}
+                      required
+                  >
+                      {Object.entries(DRILL_TYPES).map(([key, value]) => (
+                          <option key={key} value={value}>{value.replace(/_/g, ' ').toUpperCase()}</option>
+                      ))}
+                  </select>
+              </div>
+              <div>
+                  <label htmlFor="rawScore">Raw Score:</label>
+                  <input
+                      type="number"
+                      id="rawScore"
+                      value={rawScore}
+                      onChange={(e) => setRawScore(e.target.value)}
+                      step="any" // Allow decimals
+                      required
+                  />
+              </div>
+              <button type="submit" disabled={isSubmittingDrill}>
+                  {isSubmittingDrill ? 'Submitting...' : 'Record Drill Result'}
+              </button>
+          </form>
+          {drillMessage && <p className="message">{drillMessage}</p>}
+        </div>
+      )}
 
       <hr />
 
@@ -1018,24 +1020,26 @@ function App() {
         {selectedPlayerIdForView && (
           <div>
             <h2>Results for Player ID: {selectedPlayerIdForView}</h2>
-            {/* --- Player Action Buttons Container --- */}
-            <div style={{ marginBottom: '15px' }}> 
-              {/* Transfer Button */}
-              <button 
-                onClick={() => openTransferModal(selectedPlayerIdForView)}
-                className="button button-secondary button-small"
-              >
-                Transfer Age Group...
-              </button>
-              {/* Delete Button */}
-              <button 
-                onClick={() => handleDeletePlayer(selectedPlayerIdForView)}
-                className="button button-danger button-small"
-                style={{ marginLeft: '10px' }} // Add space between buttons
-              >
-                🗑️ Delete Player
-              </button>
-            </div>
+            {/* --- Player Action Buttons Container - Only show if admin unlocked --- */}
+            {isAdminUnlocked && (
+              <div style={{ marginBottom: '15px' }}> 
+                {/* Transfer Button */}
+                <button 
+                  onClick={() => openTransferModal(selectedPlayerIdForView)}
+                  className="button button-secondary button-small"
+                >
+                  Transfer Age Group...
+                </button>
+                {/* Delete Button */}
+                <button 
+                  onClick={() => handleDeletePlayer(selectedPlayerIdForView)}
+                  className="button button-danger button-small"
+                  style={{ marginLeft: '10px' }} // Add space between buttons
+                >
+                  🗑️ Delete Player
+                </button>
+              </div>
+            )}
             {/* --- End Player Action Buttons Container --- */}
 
             {resultsLoading && <p>Loading results...</p>}
@@ -1069,28 +1073,9 @@ function App() {
                         )}
                       </td>
                       <td>{result.normalized_score !== null ? result.normalized_score.toFixed(0) : 'N/A'}</td>{/* Keep normalized score read-only */}
-                      {/* Actions Cell */} 
+                      {/* Actions Cell - Only show if admin unlocked */} 
                       <td>
-                        {editingResultId === result.id ? (
-                          <>
-                            <button 
-                              onClick={() => handleUpdateDrillResult(result.id)}
-                              disabled={!editingRawScore.trim()} // Disable if input is empty
-                              className="button button-small button-success" // Example styling
-                            >
-                              Save
-                            </button>
-                            <button 
-                              onClick={() => { setEditingResultId(null); setEditError(''); }} // Cancel clears state and error
-                              className="button button-small button-secondary" // Example styling
-                              style={{ marginLeft: '5px' }}
-                            >
-                              Cancel
-                            </button>
-                            {/* Display edit error inline */} 
-                            {editError && <p className="message error" style={{ fontSize: '0.8em', margin: '5px 0 0 0' }}>{editError}</p>}
-                          </>
-                        ) : (
+                        {isAdminUnlocked && (
                           <>
                             <button 
                               onClick={() => { 
