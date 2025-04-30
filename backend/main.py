@@ -1087,21 +1087,24 @@ else:
 # This MUST be the LAST route defined
 @app.get("/{full_path:path}", response_class=FileResponse, include_in_schema=False) # Exclude from OpenAPI docs
 async def serve_react_app(full_path: str):
-    index_html_path = os.path.join(os.path.dirname(__file__), "../frontend/dist/index.html")
-    print(f"Attempting to serve index.html for path: /{full_path}") # Debugging log
+    # --- BEGIN ENHANCED LOGGING ---
+    print(f"[CatchAll] Route triggered for path: /{full_path}")
+    base_dir = os.path.dirname(__file__)
+    print(f"[CatchAll] Backend root directory (__file__): {base_dir}")
+    index_html_path = os.path.join(base_dir, "../frontend/dist/index.html")
+    print(f"[CatchAll] Calculated index.html path: {index_html_path}")
 
-    # Check if the file exists
-    if not os.path.exists(index_html_path):
-        print(f"ERROR: index.html not found at {index_html_path}") # Debugging log
-        # Use JSONResponse for the error, as FileResponse expects a file
-        # Raising HTTPException might be cleaner if you prefer standard FastAPI error handling
+    # Check if the file exists using the calculated path
+    file_exists = os.path.exists(index_html_path)
+    print(f"[CatchAll] Does index.html exist at path? {file_exists}")
+    # --- END ENHANCED LOGGING ---
+
+    if not file_exists:
+        print(f"ERROR: index.html not found at {index_html_path}") # Keep original error log
         raise HTTPException(status_code=404, detail="Frontend build (index.html) not found.")
-        # return JSONResponse(
-        #     status_code=404, 
-        #     content={"message": "Frontend build not found. Cannot serve index.html."}
-        # )
-    
+
     # Serve index.html
+    print(f"[CatchAll] Serving index.html from: {index_html_path}") # Log before serving
     return FileResponse(index_html_path)
 
 
