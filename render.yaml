@@ -8,4 +8,8 @@ services:
     buildFilter:
       paths:
         - frontend/**
-        - backend/** 
+        - backend/**
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html 
