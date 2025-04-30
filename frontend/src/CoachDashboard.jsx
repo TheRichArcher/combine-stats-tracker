@@ -14,21 +14,25 @@ const DRILL_TYPES = {
   AGILITY: "agility",
 };
 
-// Default weights (can be equal or match backend defaults)
-const DEFAULT_WEIGHTS = {
-  [DRILL_TYPES.FORTY_M_DASH]: 20,
-  [DRILL_TYPES.VERTICAL_JUMP]: 20,
-  [DRILL_TYPES.CATCHING]: 20,
-  [DRILL_TYPES.THROWING]: 20,
-  [DRILL_TYPES.AGILITY]: 20,
+// Backend Age Groups (update if backend changes)
+const AGE_GROUPS = ["6U", "8U", "10U", "12U", "14U"];
+
+// Default weights matching official backend logic
+const OFFICIAL_DEFAULT_WEIGHTS = {
+  [DRILL_TYPES.FORTY_M_DASH]: 30, // 30%
+  [DRILL_TYPES.VERTICAL_JUMP]: 20, // 20%
+  [DRILL_TYPES.AGILITY]: 20, // 20%
+  [DRILL_TYPES.THROWING]: 15, // 15%
+  [DRILL_TYPES.CATCHING]: 15, // 15%
 };
 
 function CoachDashboard() {
   const [players, setPlayers] = useState([]);
   const [drillResults, setDrillResults] = useState({}); // Store results keyed by player ID
-  const [customWeights, setCustomWeights] = useState(DEFAULT_WEIGHTS);
+  const [customWeights, setCustomWeights] = useState(OFFICIAL_DEFAULT_WEIGHTS); // Use official defaults
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState('All'); // New state for age group filter
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -106,14 +110,24 @@ function CoachDashboard() {
     return Math.round(customComposite * 100) / 100; // Round to 2 decimal places
   };
 
-  // --- Memoized Player Data with Custom Scores ---
-  const playersWithCustomScores = useMemo(() => {
-    return players.map(player => ({
+  // --- Memoized Player Data with Custom Scores AND Filtering ---
+  const filteredAndSortedPlayers = useMemo(() => {
+    // 1. Filter by selected age group
+    const filteredPlayers = players.filter(player => 
+      selectedAgeGroup === 'All' || player.age_group === selectedAgeGroup
+    );
+
+    // 2. Calculate custom composite scores for filtered players
+    const playersWithScores = filteredPlayers.map(player => ({
       ...player,
       customCompositeScore: calculateCustomCompositeScore(player.id)
       // TODO: Add official composite score if needed later
-    })).sort((a, b) => b.customCompositeScore - a.customCompositeScore); // Sort descending by custom score
-  }, [players, drillResults, customWeights]); // Recalculate when data or weights change
+    }));
+    
+    // 3. Sort the scored players by custom score
+    return playersWithScores.sort((a, b) => b.customCompositeScore - a.customCompositeScore); // Sort descending by custom score
+
+  }, [players, drillResults, customWeights, selectedAgeGroup]); // Recalculate when data, weights, or filter changes
 
   // --- Event Handlers ---
   const handleWeightChange = (drillType, value) => {
@@ -125,7 +139,12 @@ function CoachDashboard() {
   };
 
   const resetWeights = () => {
-    setCustomWeights(DEFAULT_WEIGHTS);
+    setCustomWeights(OFFICIAL_DEFAULT_WEIGHTS); // Reset to official defaults
+  };
+
+  // New handler for age group filter change
+  const handleAgeGroupChange = (event) => {
+    setSelectedAgeGroup(event.target.value);
   };
 
   // --- Render Logic ---
@@ -174,7 +193,23 @@ function CoachDashboard() {
       {/* Player Table with Custom Scores */}
       <div className="results-section">
         <h2>Custom Player Rankings</h2>
-        {playersWithCustomScores.length > 0 ? (
+        
+        {/* Age Group Filter Dropdown */}
+        <div className="filter-section" style={{ marginBottom: '15px' }}>
+          <label htmlFor="ageGroupFilter" style={{ marginRight: '10px' }}>Filter by Age Group:</label>
+          <select 
+            id="ageGroupFilter" 
+            value={selectedAgeGroup} 
+            onChange={handleAgeGroupChange}
+          >
+            <option value="All">All</option>
+            {AGE_GROUPS.map(group => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+
+        {filteredAndSortedPlayers.length > 0 ? (
           <table>
             <thead>
               <tr>
@@ -188,9 +223,10 @@ function CoachDashboard() {
               </tr>
             </thead>
             <tbody>
-              {playersWithCustomScores.map((player, index) => (
+              {/* Use the filtered and sorted list */}
+              {filteredAndSortedPlayers.map((player, index) => ( 
                 <tr key={player.id}>
-                  <td>{index + 1}</td> {/* Rank based on current sort */} 
+                  <td>{index + 1}</td> {/* Rank based on current filter/sort */} 
                   <td>{player.name}</td>
                   <td>{player.number || 'N/A'}</td>
                   <td>{player.age_group}</td>
@@ -201,7 +237,7 @@ function CoachDashboard() {
             </tbody>
           </table>
         ) : (
-          <p>No players found.</p>
+          <p>No players found{selectedAgeGroup !== 'All' ? ` for age group ${selectedAgeGroup}` : ''}.</p>
         )}
       </div>
     </div>
