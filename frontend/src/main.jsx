@@ -5,7 +5,7 @@ import App from './App';
 import CoachesView from './CoachDashboard';
 // import PlayerDetail from './components/PlayerDetail';
 // import UploadPlayers from './components/UploadPlayers';
-import './index.css';
+import './App.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
