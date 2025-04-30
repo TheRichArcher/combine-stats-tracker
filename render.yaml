@@ -12,4 +12,4 @@ services:
     routes:
       - type: rewrite
         source: /*
-        destination: /index.html 
+        destination: /frontend/dist/index.html 
