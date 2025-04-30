@@ -1097,11 +1097,15 @@ else:
 # by serving the main index.html file for the SPA.
 @app.get("/{full_path:path}", response_class=FileResponse, include_in_schema=False)
 async def serve_react_app_catch_all(full_path: str):
-    print(f"[CatchAll Route] Path '/{full_path}' not found in API or static assets. Serving index.html.")
+    # --- Enhanced Logging ---
+    print(f"--- [Catch-All Route] Received request for path: '/{full_path}'")
+    print(f"--- [Catch-All Route] Attempting to serve: {index_html_path}")
+    # --- End Enhanced Logging ---
     # Check if index.html exists before serving
     if not os.path.exists(index_html_path):
         print(f"[CatchAll Route] ERROR: index.html not found at {index_html_path}")
         raise HTTPException(status_code=500, detail="Frontend entry point (index.html) not found.")
+    print(f"--- [Catch-All Route] Serving index.html for path: '/{full_path}'") # Log success
     return FileResponse(index_html_path)
 
 
