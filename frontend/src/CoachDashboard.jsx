@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver'; // Import file-saver
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { FaMedal, FaExclamationCircle } from 'react-icons/fa';
+import Layout from './Layout';
 
 // Assuming API_BASE_URL is defined similarly or passed as prop/context
 // Use environment variable or hardcode temporarily if needed
@@ -228,24 +229,11 @@ function CoachDashboard({ user }) {
   };
 
   // --- Render Logic ---
-  if (loading) return <Spinner />;
-  if (error) return (
-    <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>
-  );
+  if (loading) return <Layout><Spinner /></Layout>;
+  if (error) return <Layout><div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div></Layout>;
 
   return (
-    <>
-      {/* Fixed Coach Header Bar */}
-      <div className="coach-header">
-        <div className="coach-header-left">
-          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="coach-header-logo" />
-          <span className="coach-header-title">Woo-Combine</span>
-        </div>
-        <div className="coach-header-right">
-          {user && <span className="coach-header-email">{user.displayName || user.email}</span>}
-          <button className="coach-logout-btn" onClick={handleLogout}>Logout</button>
-        </div>
-      </div>
+    <Layout>
       <div className="App container coach-dashboard coach-dashboard-main">
         <h1>Coach's Dashboard</h1>
         <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
@@ -439,10 +427,7 @@ function CoachDashboard({ user }) {
           )}
         </div>
       </div>
-      <footer className="global-footer">
-        <span>Woo-Combine &copy; {new Date().getFullYear()} | Questions? <a href="mailto:support@woo-combine.com">Email support@woo-combine.com</a></span>
-      </footer>
-    </>
+    </Layout>
   );
 }
 
