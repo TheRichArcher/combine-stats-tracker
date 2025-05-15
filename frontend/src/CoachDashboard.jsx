@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver'; // Import file-saver
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { FaMedal, FaExclamationCircle } from 'react-icons/fa';
-import Layout from './Layout';
+import AppLayout from './AppLayout';
 
 // Assuming API_BASE_URL is defined similarly or passed as prop/context
 // Use environment variable or hardcode temporarily if needed
@@ -229,11 +229,11 @@ function CoachDashboard({ user }) {
   };
 
   // --- Render Logic ---
-  if (loading) return <Layout><Spinner /></Layout>;
-  if (error) return <Layout><div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div></Layout>;
+  if (loading) return <AppLayout><Spinner /></AppLayout>;
+  if (error) return <AppLayout><div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div></AppLayout>;
 
   return (
-    <Layout>
+    <AppLayout>
       <div className="App container coach-dashboard coach-dashboard-main">
         <h1>Coach's Dashboard</h1>
         <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
@@ -427,7 +427,7 @@ function CoachDashboard({ user }) {
           )}
         </div>
       </div>
-    </Layout>
+    </AppLayout>
   );
 }
 

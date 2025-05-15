@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom'; // Import Link
 import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
-import Layout from './Layout';
+import AppLayout from './AppLayout';
 
 // --- Define Custom Error Class ---
 class HttpError extends Error {
@@ -882,7 +882,7 @@ function App() {
 
   // --- Render --- 
   return (
-    <Layout>
+    <AppLayout>
       <div className="App container">
         <img src="/combine-logo.png" alt="Combine Stats Tracker Logo" className="logo" />
         <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
@@ -1568,7 +1568,7 @@ function App() {
         {/* --- <<< END NEW PLAYER TRANSFER MODAL >>> --- */}
 
       </div>
-    </Layout>
+    </AppLayout>
   );
 }
 
