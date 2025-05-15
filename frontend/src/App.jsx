@@ -884,7 +884,6 @@ function App() {
   return (
     <AppLayout>
       <div className="App container">
-        <img src="/combine-logo.png" alt="Combine Stats Tracker Logo" className="logo" />
         <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
           Coaches View
         </Link>

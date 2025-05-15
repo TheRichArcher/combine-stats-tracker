@@ -421,7 +421,6 @@ function CoachDashboard({ user }) {
             </div> /* Close coach-rankings-container */
           ) : (
             <div className="empty-state">
-              <img src="/combine-logo.png" alt="Woo-Combine Logo" className="empty-logo" />
               <div className="empty-message">No players found{selectedAgeGroup !== 'All' ? ` for ${selectedAgeGroup}` : ''}. Try adjusting the filters.</div>
             </div>
           )}
