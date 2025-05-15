@@ -883,7 +883,7 @@ function App() {
   // --- Render --- 
   return (
     <AppLayout>
-      <div>
+      <div className="card-content">
         <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
           Coaches View
         </Link>

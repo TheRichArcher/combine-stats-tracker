@@ -234,7 +234,7 @@ function CoachDashboard({ user }) {
 
   return (
     <AppLayout>
-      <div>
+      <div className="card-content">
         <h1>Coach's Dashboard</h1>
         <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
           <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. 

@@ -9,7 +9,7 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f3f6f9;
   color: #0f1d2e;
-  padding: 16px;
+  padding: 0;
 }
 
 /* Container for mobile screens */
@@ -1230,4 +1230,11 @@ button, .coach-logout-btn, .weight-controls button, .login-btn {
     font-size: 0.98em;
     padding: 0.8em 0 0.8em 0;
   }
+}
+
+.card-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 } 
