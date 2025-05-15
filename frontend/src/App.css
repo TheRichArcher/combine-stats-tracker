@@ -799,4 +799,423 @@ section {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* --- Coach Dashboard Header Bar --- */
+.coach-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  padding: 0 2vw;
+}
+.coach-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.coach-header-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  margin-right: 6px;
+}
+.coach-header-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #00bcd4;
+  letter-spacing: 1px;
+}
+.coach-header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.coach-header-email {
+  color: #607d8b;
+  font-size: 1rem;
+  font-weight: 500;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coach-logout-btn {
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.coach-logout-btn:hover {
+  background: #0277bd;
+}
+
+/* Add top padding to main dashboard to account for fixed header */
+.coach-dashboard-main {
+  padding-top: 80px !important;
+}
+
+/* --- Dashboard Controls & Table Spacing --- */
+.form-section.weight-controls {
+  margin-bottom: 2.2em;
+  padding: 1.2em 1.5em;
+  background: #f9fafa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.weight-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 1em;
+}
+.weight-slider label {
+  min-width: 140px;
+}
+.weight-slider input[type="range"] {
+  flex: 1;
+  accent-color: #00bcd4;
+  margin: 0 10px;
+}
+.weight-slider input[type="number"] {
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+  padding: 0.4em 0.7em;
+  font-size: 1em;
+  width: 60px;
+  margin-left: 0.5em;
+}
+.weight-controls button {
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.3em;
+  font-size: 1.05em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5em;
+  transition: background 0.18s;
+}
+.weight-controls button:hover {
+  background: #0277bd;
+}
+
+/* --- Table/Results Section Spacing --- */
+.results-section {
+  margin-top: 2.5em;
+  margin-bottom: 2em;
+}
+.coach-rankings-container {
+  margin-top: 1.5em;
+}
+
+/* --- Mobile Card Spacing & Tap Area --- */
+@media (max-width: 767px) {
+  .coach-header {
+    height: 52px;
+    padding: 0 1vw;
+  }
+  .coach-header-title {
+    font-size: 1.05rem;
+  }
+  .coach-header-logo {
+    width: 28px;
+    height: 28px;
+  }
+  .coach-header-email {
+    font-size: 0.92rem;
+    max-width: 90px;
+  }
+  .coach-logout-btn {
+    font-size: 0.95rem;
+    padding: 0.5em 0.9em;
+  }
+  .coach-dashboard-main {
+    padding-top: 62px !important;
+  }
+  .player-card {
+    margin-bottom: 22px;
+    padding: 16px 8px;
+  }
+  .player-card-header {
+    margin-bottom: 10px;
+  }
+  .player-card-details summary {
+    font-size: 1.08em;
+    padding: 10px 0 10px 0;
+    border-radius: 8px;
+    background: #e0f7fa;
+    color: #0277bd;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: background 0.18s;
+  }
+  .player-card-details[open] summary {
+    background: #b2ebf2;
+    color: #00bcd4;
+  }
+  .card-section {
+    margin-bottom: 18px;
+    padding-top: 8px;
+  }
+}
+
+.player-card-details summary {
+  font-size: 1.08em;
+  padding: 10px 0 10px 0;
+  border-radius: 8px;
+  background: #e0f7fa;
+  color: #0277bd;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+.player-card-details[open] summary {
+  background: #b2ebf2;
+  color: #00bcd4;
+}
+.card-section {
+  margin-bottom: 18px;
+  padding-top: 8px;
+}
+
+/* --- Spinner --- */
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40vh;
+}
+.spinner > div {
+  width: 16px;
+  height: 16px;
+  margin: 0 6px;
+  border-radius: 50%;
+  background: #00bcd4;
+  animation: spinner-bounce 0.7s infinite alternate;
+}
+.spinner > div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.spinner > div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes spinner-bounce {
+  to { transform: translateY(-18px); opacity: 0.5; }
+}
+
+/* --- Error Banner --- */
+.error-banner {
+  background: #ffebee;
+  color: #d32f2f;
+  border: 1.5px solid #d32f2f;
+  border-radius: 10px;
+  padding: 1em 1.5em;
+  margin: 2em auto;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  font-size: 1.1em;
+  box-shadow: 0 2px 8px rgba(211,47,47,0.07);
+}
+.error-icon {
+  font-size: 1.3em;
+  margin-right: 0.3em;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 3em 0 2em 0;
+  color: #607d8b;
+}
+.empty-logo {
+  width: 80px;
+  margin-bottom: 1.2em;
+  opacity: 0.7;
+}
+.empty-message {
+  font-size: 1.15em;
+  color: #607d8b;
+  background: #f3f6f9;
+  border-radius: 8px;
+  padding: 1em 1.5em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* --- Medal Icon & Top Player Highlight --- */
+.medal-icon {
+  color: #ffd700;
+  font-size: 1.3em;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+.top-player-row {
+  background: linear-gradient(90deg, #e0f7fa 60%, #fffbe7 100%);
+  font-weight: 700;
+}
+.top-player-card {
+  border: 2px solid #ffd700;
+  box-shadow: 0 2px 12px rgba(255,215,0,0.08);
+}
+
+/* --- Summary Toggle (Progressive Disclosure) --- */
+.details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 1.08em;
+  padding: 12px 0 12px 0;
+  border-radius: 8px;
+  background: #e0f7fa;
+  color: #0277bd;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+  user-select: none;
+}
+.toggle-icon {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 1.1em;
+  transition: transform 0.25s cubic-bezier(.4,2,.6,1);
+}
+.player-card-details[open] .toggle-icon {
+  transform: rotate(180deg);
+}
+.player-card-details[open] .details-toggle {
+  background: #b2ebf2;
+  color: #00bcd4;
+}
+
+/* --- Slider Thumb & Track Styling --- */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e0f7fa;
+  border-radius: 6px;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0,188,212,0.08);
+  margin: 0 10px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #00bcd4;
+  box-shadow: 0 2px 8px rgba(0,188,212,0.18);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: background 0.2s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  background: #0277bd;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #00bcd4;
+  box-shadow: 0 2px 8px rgba(0,188,212,0.18);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: background 0.2s;
+}
+input[type="range"]:hover::-moz-range-thumb {
+  background: #0277bd;
+}
+input[type="range"]::-ms-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #00bcd4;
+  box-shadow: 0 2px 8px rgba(0,188,212,0.18);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: background 0.2s;
+}
+input[type="range"]:hover::-ms-thumb {
+  background: #0277bd;
+}
+input[type="range"]:focus {
+  outline: none;
+}
+
+/* --- Headings, Buttons, and Font Consistency --- */
+h1, h2, h3, h4, .coach-header-title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #0277bd;
+  font-weight: 700;
+}
+h1 {
+  font-size: 2.1rem;
+  margin-bottom: 0.7em;
+}
+h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5em;
+}
+h3, h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.3em;
+  letter-spacing: 0.5px;
+}
+button, .coach-logout-btn, .weight-controls button, .login-btn {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+
+/* --- Footer --- */
+.global-footer {
+  width: 100vw;
+  background: #e0f7fa;
+  color: #0277bd;
+  text-align: center;
+  padding: 1.2em 0 1.2em 0;
+  font-size: 1.05em;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-top: 2em;
+  border-top: 1.5px solid #b2ebf2;
+}
+.global-footer a {
+  color: #00bcd4;
+  text-decoration: underline;
+}
+.global-footer a:hover {
+  color: #0277bd;
+}
+
+@media (max-width: 767px) {
+  .empty-logo {
+    width: 60px;
+  }
+  .empty-message {
+    font-size: 1em;
+    padding: 0.7em 0.7em;
+  }
+  .global-footer {
+    font-size: 0.98em;
+    padding: 0.8em 0 0.8em 0;
+  }
 } 
