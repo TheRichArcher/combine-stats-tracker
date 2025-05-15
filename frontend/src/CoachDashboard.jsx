@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css'; // Reuse existing styles if applicable
 import { saveAs } from 'file-saver'; // Import file-saver
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
 
 // Assuming API_BASE_URL is defined similarly or passed as prop/context
 // Use environment variable or hardcode temporarily if needed
@@ -35,7 +37,7 @@ const OFFICIAL_DEFAULT_WEIGHTS = {
   [DRILL_TYPES.CATCHING]: 15, // 15%
 };
 
-function CoachDashboard() {
+function CoachDashboard({ user }) {
   const [players, setPlayers] = useState([]);
   const [drillResults, setDrillResults] = useState({}); // Store results keyed by player ID
   const [customWeights, setCustomWeights] = useState(OFFICIAL_DEFAULT_WEIGHTS); // Use official defaults
@@ -215,12 +217,25 @@ function CoachDashboard() {
     saveAs(blob, filename);
   };
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    window.location.href = '/login';
+  };
+
   // --- Render Logic ---
   if (loading) return <div>Loading Coach Dashboard...</div>;
   if (error) return <div className="message error">Error: {error}</div>;
 
   return (
     <div className="App container coach-dashboard"> {/* Add specific class */} 
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1em', marginBottom: '1em' }}>
+        {user && (
+          <>
+            <span>Signed in as: {user.displayName || user.email}</span>
+            <button onClick={handleLogout}>Logout</button>
+          </>
+        )}
+      </div>
       <h1>Coach's Dashboard</h1>
       <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
         <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. 

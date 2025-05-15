@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import App from './App';
 import CoachesView from './CoachDashboard';
+import Login from './Login';
+import RequireAuth from './RequireAuth';
 // import PlayerDetail from './components/PlayerDetail';
 // import UploadPlayers from './components/UploadPlayers';
 import './App.css';
@@ -20,7 +22,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Router>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/coaches" element={<CoachesView />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/coaches" element={
+          <RequireAuth>
+            <CoachesView />
+          </RequireAuth>
+        } />
         {/* Remove routes for components handled within App.jsx */}
         {/* <Route path="/players/:playerId" element={<PlayerDetail />} /> */}
         {/* <Route path="/upload-players" element={<UploadPlayers />} /> */}
