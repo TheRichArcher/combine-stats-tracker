@@ -883,7 +883,7 @@ function App() {
   // --- Render --- 
   return (
     <AppLayout>
-      <div className="App container">
+      <div>
         <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
           Coaches View
         </Link>
