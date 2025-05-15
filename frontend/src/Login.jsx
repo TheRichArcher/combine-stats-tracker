@@ -3,11 +3,18 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './firebase';
 
+// Map Firebase error codes to friendly messages
+const errorMap = {
+  'auth/user-not-found': 'Email not recognized.',
+  'auth/wrong-password': 'Incorrect password.',
+  'auth/invalid-email': 'Please enter a valid email address.',
+  'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+};
+
 export default function Login({ user }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,37 +25,65 @@ export default function Login({ user }) {
     setError('');
     setLoading(true);
     try {
-      await setPersistence(auth, remember ? browserLocalPersistence : undefined);
+      await setPersistence(auth, browserLocalPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/coaches', { replace: true });
     } catch (err) {
-      setError(err.message.replace('Firebase: ', ''));
+      // Map Firebase error codes to friendly messages
+      let msg = err.message.replace('Firebase: ', '');
+      if (err.code && errorMap[err.code]) {
+        msg = errorMap[err.code];
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Coach Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        {/* Logo */}
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
         </div>
-        <div>
-          <label>Password:</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <form onSubmit={handleSubmit} className="login-form">
+          <div>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoComplete="username"
+              className="login-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="login-input"
+            />
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+          <div className="login-links">
+            <a href="#" className="forgot-link">Forgot password?</a>
+          </div>
+          {error && <div className="login-error">{error}</div>}
+        </form>
+        <div className="login-footer">
+          Don't have an account? Contact us at <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>.
         </div>
-        <div>
-          <label>
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> Remember Me
-          </label>
-        </div>
-        <button type="submit" disabled={loading}>Login</button>
-        {error && <div className="error">{error}</div>}
-      </form>
-      <p style={{color: 'gray', fontSize: '0.9em'}}>Account creation is disabled. Contact admin for access.</p>
+      </div>
     </div>
   );
 } 
