@@ -30,15 +30,67 @@ body {
 
 .login-card {
   background: #fff;
-  padding: 2.5rem 2rem 2rem 2rem;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
   border-radius: 18px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-  max-width: 370px;
+  max-width: 540px;
   width: 100%;
   margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.dashboard-warning {
+  color: #b71c1c;
+  background: #fff8f8;
+  border: 1.5px solid #e57373;
+  border-radius: 10px;
+  padding: 1em 1.5em;
+  margin-bottom: 1.5em;
+  font-size: 1.08em;
+  font-weight: 500;
+  text-align: left;
+}
+
+.weight-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 0.7em;
+}
+.weight-slider label {
+  min-width: 120px;
+  font-weight: 500;
+}
+.weight-slider input[type="range"] {
+  flex: 1;
+  margin: 0 8px;
+}
+.weight-slider input[type="number"] {
+  width: 60px;
+  margin-left: 4px;
+}
+
+.primary-action {
+  width: 100%;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+.secondary-action {
+  width: 100%;
+  margin-bottom: 1em;
+  background: #e0f7fa;
+  color: #0277bd;
+  border: 1px solid #00bcd4;
+}
+.secondary-action:hover {
+  background: #b2ebf2;
+}
+
+h1, h2, h3 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .login-logo {
@@ -122,10 +174,14 @@ body {
   color: #0277bd;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .login-card {
     padding: 1.2rem 0.5rem 1.5rem 0.5rem;
     max-width: 98vw;
+  }
+  .dashboard-warning {
+    font-size: 0.98em;
+    padding: 0.7em 0.5em;
   }
   .login-logo {
     font-size: 1.5rem;
