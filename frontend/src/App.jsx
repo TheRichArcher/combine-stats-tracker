@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom'; // Import Link
 import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
-import AppLayout from './AppLayout';
 import PageWrapper from './PageWrapper';
 import PrimaryButton from './PrimaryButton';
 import TextInput from './TextInput';
