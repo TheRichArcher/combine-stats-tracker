@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './firebase';
-import PageWrapper from './PageWrapper';
-import PrimaryButton from './PrimaryButton';
-import TextInput from './TextInput';
 
 // Map Firebase error codes to friendly messages
 const errorMap = {
@@ -43,37 +40,48 @@ export default function Login({ user }) {
   };
 
   return (
-    <PageWrapper>
-      <form onSubmit={handleSubmit} className="login-form">
-        <TextInput
-          id="email"
-          type="email"
-          label="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-          autoComplete="username"
-        />
-        <TextInput
-          id="password"
-          type="password"
-          label="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          autoComplete="current-password"
-        />
-        <PrimaryButton type="submit" loading={loading}>
-          Login
-        </PrimaryButton>
-        <div className="login-links">
-          <a href="#" className="forgot-link">Forgot password?</a>
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
         </div>
-        {error && <div className="login-error">{error}</div>}
-      </form>
-      <div className="login-footer">
-        Don't have an account? Contact us at <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>.
+        <form onSubmit={handleSubmit} className="login-form">
+          <div>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoComplete="username"
+              className="login-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="login-input"
+            />
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+          <div className="login-links">
+            <a href="#" className="forgot-link">Forgot password?</a>
+          </div>
+          {error && <div className="login-error">{error}</div>}
+        </form>
+        <div className="login-footer">
+          Don't have an account? Contact us at <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>.
+        </div>
       </div>
-    </PageWrapper>
+    </div>
   );
 } 
