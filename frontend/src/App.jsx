@@ -61,7 +61,9 @@ function Spinner() {
 
 const App = () => (
   <AuthProvider>
+    <div>Loaded</div> {/* TEMP: Debug render */}
     <Routes>
+      <Route path="/" element={<div>Hello world</div>} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
