@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Link, Routes, Route, Navigate } from 'react-router-dom';
+import { Link, BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
 import PageWrapper from './PageWrapper';
@@ -61,34 +61,36 @@ function Spinner() {
 
 const App = () => (
   <AuthProvider>
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/dashboard"
-        element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/coaches"
-        element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/players"
-        element={
-          <RequireAuth>
-            <Players />
-          </RequireAuth>
-        }
-      />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/coaches"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/players"
+          element={
+            <RequireAuth>
+              <Players />
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Router>
   </AuthProvider>
 );
 
