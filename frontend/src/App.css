@@ -193,4 +193,126 @@ h1, h2, h3 {
     font-size: 1rem;
     padding: 0.8rem 0.7rem;
   }
+}
+
+/* Dashboard Layout Styles */
+.dashboard-outer-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #e0f7fa 0%, #f3f6f9 60%, #fff 100%);
+}
+
+.dashboard-sidebar {
+  background: #fff;
+  min-width: 260px;
+  max-width: 300px;
+  width: 22vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1.2rem 2rem 1.2rem;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.07);
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+  justify-content: flex-start;
+}
+
+.sidebar-logo {
+  width: 120px;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-user-email {
+  font-size: 1.08em;
+  color: #0277bd;
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+  text-align: center;
+}
+
+.sidebar-logout {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 0;
+}
+
+.dashboard-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+}
+
+.dashboard-content-wrapper {
+  flex: 1 0 auto;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-footer {
+  flex-shrink: 0;
+  text-align: center;
+  color: #607d8b;
+  font-size: 0.98em;
+  margin-top: auto;
+  padding-bottom: 1.2em;
+  background: none;
+}
+
+@media (max-width: 900px) {
+  .dashboard-main-content {
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+  }
+  .dashboard-content-wrapper {
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+    max-width: 98vw;
+  }
+  .dashboard-sidebar {
+    min-width: 90px;
+    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+  }
+  .sidebar-logo {
+    width: 70px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-outer-container {
+    flex-direction: column;
+  }
+  .dashboard-sidebar {
+    flex-direction: row;
+    min-width: 0;
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.5rem;
+  }
+  .sidebar-logo {
+    width: 50px;
+    margin-bottom: 0;
+  }
+  .sidebar-user-email {
+    font-size: 0.95em;
+    margin-bottom: 0;
+    margin-left: 0.5em;
+  }
+  .dashboard-main-content {
+    padding: 0.5rem;
+  }
+  .dashboard-content-wrapper {
+    padding: 0.7rem 0.2rem 1rem 0.2rem;
+    max-width: 100vw;
+  }
 } 
