@@ -882,421 +882,408 @@ function App() {
 
   // --- Render --- 
   return (
-    <AppLayout>
-      <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
-        Coaches View
-      </Link>
-
-      {/* Player Creation Form */}
-      <div className="form-section">
-        <h1>Create Player Profile</h1>
-        <form onSubmit={handlePlayerSubmit}>
-          <div>
-            <label htmlFor="name">Name:</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              list="player-names-list"
-              required
-            />
-            <datalist id="player-names-list">
-              {allPlayers && allPlayers.map((player) => (
-                <option key={player.id} value={player.name} />
-              ))}
-            </datalist>
-          </div>
-          <div>
-            <label htmlFor="ageGroup">Age Group:</label>
-            <select
-              id="ageGroup"
-              value={ageGroup}
-              onChange={(e) => setAgeGroup(e.target.value)}
-              required
-            >
-              {AGE_GROUPS.map((group) => (
-                <option key={group} value={group}>
-                  {group === "" ? "-- Select Age Group --" : group}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Photo:</label>
-            {!stream && (
-              <>
-                <button type="button" onClick={startCamera}>Start Camera</button>
-                <span> or </span>
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-              </>
-            )}
-          </div>
-          {stream && (
-            <div className="camera-container">
-              <video ref={videoRef} autoPlay playsInline muted style={{ maxWidth: '100%', height: 'auto' }}></video>
-              <button type="button" onClick={capturePhoto}>Capture Photo</button>
-              <button type="button" onClick={stopCameraStream}>Stop Camera</button>
-            </div>
-          )}
-          <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
-          {photoPreview && (
-            <div className="preview-container">
-              <p>Photo Preview:</p>
-              <img src={photoPreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
-            </div>
-          )}
-
-          <button type="submit" disabled={isSubmittingPlayer}>
-            {isSubmittingPlayer ? 'Submitting...' : 'Create Player'}
-          </button>
-        </form>
-        {playerMessage && playerMessage.includes('successfully!') && (
-          <div style={{ marginTop: '10px' }}>
-            <label htmlFor="generatedNumber">Number:</label>
-            <input
-              type="text"
-              id="generatedNumber"
-              readOnly
-              value={generatedPlayerNumber || ''}
-              placeholder="(Generating...)"
-              style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
-            />
-            <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
-               Generated After Creation
-            </em>
-            <p className="message" style={{ marginTop: '5px' }}>{playerMessage}</p>
-          </div>
-        )}
-        {playerMessage && !playerMessage.includes('successfully!') && (
-           <p className="message error">{playerMessage}</p>
-        )}
-      </div>
-
-      {/* Drill Result Entry Form - Only show if admin is unlocked */}
-      {isAdminUnlocked && (
-        <div className="form-section">
-          <h1>Enter Drill Result</h1>
-          <form onSubmit={handleDrillSubmit}>
-              <div>
-                  <label htmlFor="playerId">Player Number:</label>
-                  <input
-                      type="number"
-                      id="playerId"
-                      value={playerId}
-                      onChange={(e) => setPlayerId(e.target.value)}
-                      required
-                  />
-                  {/* Add matched player display below input */}
-                  {playerId && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
-                      {matchedPlayer
-                        ? <span style={{ fontWeight: 'bold', color: 'green' }}>✅ Matched: {matchedPlayer.name}</span>
-                        : <span style={{ fontWeight: 'bold', color: 'red' }}>❌ No player found with this number</span>}
-                    </div>
-                  )}
-              </div>
-              <div>
-                  <label htmlFor="drillType">Drill Type:</label>
-                  <select
-                      id="drillType"
-                      value={drillType}
-                      onChange={(e) => setDrillType(e.target.value)}
-                      required
-                  >
-                      {Object.entries(DRILL_TYPES).map(([key, value]) => (
-                          <option key={key} value={value}>{value.replace(/_/g, ' ').toUpperCase()}</option>
-                      ))}
-                  </select>
-              </div>
-              <div>
-                  <label htmlFor="rawScore">Raw Score:</label>
-                  <input
-                      type="number"
-                      id="rawScore"
-                      value={rawScore}
-                      onChange={(e) => setRawScore(e.target.value)}
-                      step="any" // Allow decimals
-                      required
-                  />
-              </div>
-              <button type="submit" disabled={isSubmittingDrill}>
-                  {isSubmittingDrill ? 'Submitting...' : 'Record Drill Result'}
-              </button>
-          </form>
-          {drillMessage && <p className="message">{drillMessage}</p>}
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
         </div>
-      )}
+        <div className="card-content">
+          <Link to="/coaches" className="button" style={{ display: 'block', margin: '10px auto', textDecoration: 'none', textAlign: 'center' }}>
+            Coaches View
+          </Link>
 
-      <hr />
-
-      {/* Player Drill Results Viewer */}
-      <div className="results-section">
-        <h1>View Player Drill Results</h1>
-        <div>
-          <label htmlFor="playerSelect">Select Player:</label>
-          {playersLoading && <p>Loading players...</p>}
-          {playersError && <p className="message error">{playersError}</p>}
-          {!playersLoading && !playersError && (
-            <Select // <-- Use react-select component
-              id="playerSelect"
-              options={formatPlayerOptions(allPlayers)} // <-- Pass formatted & grouped options
-              value={formatPlayerOptions(allPlayers) // Find the selected option object to control the component
-                .flatMap(group => group.options) // Flatten groups to search all options
-                .find(option => option.value === selectedPlayerIdForView) || null}
-              onChange={(selectedOption) => {
-                setSelectedPlayerIdForView(selectedOption ? selectedOption.value : ''); // Update state with selected player ID
-              }}
-              isClearable // Allow clearing the selection
-              placeholder="-- Type to search or select a Player --"
-              styles={{ // Optional: basic styling adjustments
-                  container: (provided) => ({ ...provided, marginTop: '5px', marginBottom: '15px' }),
-                  menu: (provided) => ({ ...provided, zIndex: 9999 }) // Ensure dropdown appears above other elements
-              }}
-            />
-          )}
-        </div>
-
-        {selectedPlayerIdForView && (
-          <div>
-            <h2>Results for Player ID: {selectedPlayerIdForView}</h2>
-            {/* --- Player Action Buttons Container - Only show if admin unlocked --- */}
-            {isAdminUnlocked && (
-              <div style={{ marginBottom: '15px' }}> 
-                {/* Transfer Button */}
-                <button 
-                  onClick={() => openTransferModal(selectedPlayerIdForView)}
-                  className="button button-secondary button-small"
-                >
-                  Transfer Age Group...
-                </button>
-                {/* Delete Button */}
-                <button 
-                  onClick={() => handleDeletePlayer(selectedPlayerIdForView)}
-                  className="button button-danger button-small"
-                  style={{ marginLeft: '10px' }} // Add space between buttons
-                >
-                  🗑️ Delete Player
-                </button>
-              </div>
-            )}
-            {/* --- End Player Action Buttons Container --- */}
-
-            {resultsLoading && <p>Loading results...</p>}
-            {resultsError && <p className="message error">{resultsError}</p>}
-            {!resultsLoading && !resultsError && selectedPlayerResults.length > 0 && (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Drill Type</th>
-                    <th>Raw Score</th>
-                    <th>Normalized Score</th>
-                    <th>Actions</th>{/* <-- ADDED Actions Header */} 
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedPlayerResults.map((result) => (
-                    <tr key={result.id}>
-                      <td>{result.drill_type.replace(/_/g, ' ').toUpperCase()}</td>
-                      {/* Conditional rendering for Raw Score cell */} 
-                      <td>
-                        {editingResultId === result.id ? (
-                          <input 
-                            type="text" // Use text to allow various formats like "7/10"
-                            value={editingRawScore}
-                            onChange={(e) => setEditingRawScore(e.target.value)}
-                            // Basic styling example
-                            style={{ width: '80px', padding: '2px' }} 
-                          />
-                        ) : (
-                          result.raw_score
-                        )}
-                      </td>
-                      <td>{result.normalized_score !== null ? result.normalized_score.toFixed(0) : 'N/A'}</td>{/* Keep normalized score read-only */}
-                      {/* Actions Cell - Only show if admin unlocked */} 
-                      <td>
-                        {isAdminUnlocked && (
-                          <>
-                            <button 
-                              onClick={() => { 
-                                setEditingResultId(result.id); 
-                                setEditingRawScore(result.raw_score); 
-                                setEditError(''); // Clear error when starting edit
-                              }}
-                              className="button button-small button-link-style" // Example styling
-                            >
-                              ✏️ Edit
-                            </button>
-                            {/* Add Delete Button - Show only when NOT editing */}
-                            <button 
-                              onClick={() => handleDeleteDrillResult(result.id)}
-                              className="button button-small button-danger button-link-style" // Example styling
-                              style={{ marginLeft: '10px' }} // Add some space
-                            >
-                              🗑️ Delete
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
+          {/* Player Creation Form */}
+          <div className="form-section">
+            <h1>Create Player Profile</h1>
+            <form onSubmit={handlePlayerSubmit}>
+              <div>
+                <label htmlFor="name">Name:</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  list="player-names-list"
+                  required
+                />
+                <datalist id="player-names-list">
+                  {allPlayers && allPlayers.map((player) => (
+                    <option key={player.id} value={player.name} />
                   ))}
-                </tbody>
-              </table>
+                </datalist>
+              </div>
+              <div>
+                <label htmlFor="ageGroup">Age Group:</label>
+                <select
+                  id="ageGroup"
+                  value={ageGroup}
+                  onChange={(e) => setAgeGroup(e.target.value)}
+                  required
+                >
+                  {AGE_GROUPS.map((group) => (
+                    <option key={group} value={group}>
+                      {group === "" ? "-- Select Age Group --" : group}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Photo:</label>
+                {!stream && (
+                  <>
+                    <button type="button" onClick={startCamera}>Start Camera</button>
+                    <span> or </span>
+                    <input type="file" accept="image/*" onChange={handleFileChange} />
+                  </>
+                )}
+              </div>
+              {stream && (
+                <div className="camera-container">
+                  <video ref={videoRef} autoPlay playsInline muted style={{ maxWidth: '100%', height: 'auto' }}></video>
+                  <button type="button" onClick={capturePhoto}>Capture Photo</button>
+                  <button type="button" onClick={stopCameraStream}>Stop Camera</button>
+                </div>
+              )}
+              <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+              {photoPreview && (
+                <div className="preview-container">
+                  <p>Photo Preview:</p>
+                  <img src={photoPreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                </div>
+              )}
+
+              <button type="submit" disabled={isSubmittingPlayer}>
+                {isSubmittingPlayer ? 'Submitting...' : 'Create Player'}
+              </button>
+            </form>
+            {playerMessage && playerMessage.includes('successfully!') && (
+              <div style={{ marginTop: '10px' }}>
+                <label htmlFor="generatedNumber">Number:</label>
+                <input
+                  type="text"
+                  id="generatedNumber"
+                  readOnly
+                  value={generatedPlayerNumber || ''}
+                  placeholder="(Generating...)"
+                  style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
+                />
+                <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
+                   Generated After Creation
+                </em>
+                <p className="message" style={{ marginTop: '5px' }}>{playerMessage}</p>
+              </div>
             )}
-            {!resultsLoading && !resultsError && selectedPlayerResults.length === 0 && (
-              <p>No drill results found for this player.</p>
+            {playerMessage && !playerMessage.includes('successfully!') && (
+               <p className="message error">{playerMessage}</p>
             )}
           </div>
-        )}
-      </div>
 
-      <hr />
-
-      {/* Rankings Viewer */}
-      <div className="rankings-section">
-        <h1>Player Rankings</h1>
-        <div>
-            <label htmlFor="ageGroupSelect">Select Age Group:</label>
-            <select
-                id="ageGroupSelect"
-                value={selectedAgeGroup}
-                onChange={(e) => setSelectedAgeGroup(e.target.value)}
-            >
-                {AGE_GROUPS.map((group) => (
-                    <option key={group} value={group}>
-                        {group === "" ? "-- Select Age Group --" : group}
-                    </option>
-                ))}
-            </select>
-        </div>
-
-        {selectedAgeGroup && (
-            <div>
-                <h2>Rankings for Age Group: {selectedAgeGroup}</h2>
-                {rankingsLoading && <p>Loading rankings...</p>}
-                {rankingsError && <p className="message error">{rankingsError}</p>}
-                {!rankingsLoading && !rankingsError && rankings.length > 0 && (
-                    <div className="rankings-table-container"> {/* NEW: Wrapper div */}
-                        {/* --- Desktop: Column Toggles (Grouped by Category) --- */}
-                        <div className="desktop-column-toggles">
-                            <span>Show/Hide Drills:</span>
-                            {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => (
-                                <div key={category} className="toggle-category-group">
-                                    <strong>{category}:</strong>
-                                    {drills.map(key => (
-                                        <label key={key} className={`toggle-label ${visibleDrillColumns[key] ? 'visible' : ''}`} title={`Toggle ${key.replace(/_/g, ' ').toUpperCase()}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={visibleDrillColumns[key] ?? false} // Handle potential undefined keys gracefully
-                                                onChange={() => toggleDrillColumn(key)}
-                                            />
-                                            {key.replace(/_/g, ' ').toUpperCase()}
-                                        </label>
-                                    ))}
-                                </div>
-                            ))}
+          {/* Drill Result Entry Form - Only show if admin is unlocked */}
+          {isAdminUnlocked && (
+            <div className="form-section">
+              <h1>Enter Drill Result</h1>
+              <form onSubmit={handleDrillSubmit}>
+                  <div>
+                      <label htmlFor="playerId">Player Number:</label>
+                      <input
+                          type="number"
+                          id="playerId"
+                          value={playerId}
+                          onChange={(e) => setPlayerId(e.target.value)}
+                          required
+                      />
+                      {/* Add matched player display below input */}
+                      {playerId && (
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.9em', color: '#555' }}>
+                          {matchedPlayer
+                            ? <span style={{ fontWeight: 'bold', color: 'green' }}>✅ Matched: {matchedPlayer.name}</span>
+                            : <span style={{ fontWeight: 'bold', color: 'red' }}>❌ No player found with this number</span>}
                         </div>
+                      )}
+                  </div>
+                  <div>
+                      <label htmlFor="drillType">Drill Type:</label>
+                      <select
+                          id="drillType"
+                          value={drillType}
+                          onChange={(e) => setDrillType(e.target.value)}
+                          required
+                      >
+                          {Object.entries(DRILL_TYPES).map(([key, value]) => (
+                              <option key={key} value={value}>{value.replace(/_/g, ' ').toUpperCase()}</option>
+                          ))}
+                      </select>
+                  </div>
+                  <div>
+                      <label htmlFor="rawScore">Raw Score:</label>
+                      <input
+                          type="number"
+                          id="rawScore"
+                          value={rawScore}
+                          onChange={(e) => setRawScore(e.target.value)}
+                          step="any" // Allow decimals
+                          required
+                      />
+                  </div>
+                  <button type="submit" disabled={isSubmittingDrill}>
+                      {isSubmittingDrill ? 'Submitting...' : 'Record Drill Result'}
+                  </button>
+              </form>
+              {drillMessage && <p className="message">{drillMessage}</p>}
+            </div>
+          )}
 
-                        {/* --- Desktop: Wide Table --- */}
-                        <table className="rankings-table desktop-view">
-                            <thead>
-                                {/* Row 1: Base Headers + Category Headers */}
-                                <tr>
-                                    <th rowSpan="2" className="sticky-col rank-col">Rank</th>
-                                    <th rowSpan="2" className="sticky-col name-col">Name</th>
-                                    <th rowSpan="2">Number</th>
-                                    <th rowSpan="2">Age</th>
-                                    <th rowSpan="2" title="Score calculated using default weightings across all recorded drills.">Composite Score</th>
-                                    {/* Category Headers */}
-                                    {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
-                                        const visibleDrillsInCategory = drills.filter(key => visibleDrillColumns[key]);
-                                        if (visibleDrillsInCategory.length === 0) return null; // Don't render category header if no drills are visible
-                                        return (
-                                            <th key={category} colSpan={visibleDrillsInCategory.length} className="category-header">
-                                                {category}
-                                            </th>
-                                        );
-                                    })}
-                                </tr>
-                                {/* Row 2: Individual Drill Headers */}
-                                <tr>
-                                    {ALL_DRILL_KEYS.map(key => (
-                                        visibleDrillColumns[key] && (
-                                            <th key={key} title={key.replace(/_/g, ' ').toUpperCase()} className="drill-header">
-                                                {/* Use abbreviation or shorter name if needed */}
+          <hr />
+
+          {/* Player Drill Results Viewer */}
+          <div className="results-section">
+            <h1>View Player Drill Results</h1>
+            <div>
+              <label htmlFor="playerSelect">Select Player:</label>
+              {playersLoading && <p>Loading players...</p>}
+              {playersError && <p className="message error">{playersError}</p>}
+              {!playersLoading && !playersError && (
+                <Select // <-- Use react-select component
+                  id="playerSelect"
+                  options={formatPlayerOptions(allPlayers)} // <-- Pass formatted & grouped options
+                  value={formatPlayerOptions(allPlayers) // Find the selected option object to control the component
+                    .flatMap(group => group.options) // Flatten groups to search all options
+                    .find(option => option.value === selectedPlayerIdForView) || null}
+                  onChange={(selectedOption) => {
+                    setSelectedPlayerIdForView(selectedOption ? selectedOption.value : ''); // Update state with selected player ID
+                  }}
+                  isClearable // Allow clearing the selection
+                  placeholder="-- Type to search or select a Player --"
+                  styles={{ // Optional: basic styling adjustments
+                      container: (provided) => ({ ...provided, marginTop: '5px', marginBottom: '15px' }),
+                      menu: (provided) => ({ ...provided, zIndex: 9999 }) // Ensure dropdown appears above other elements
+                  }}
+                />
+              )}
+            </div>
+
+            {selectedPlayerIdForView && (
+              <div>
+                <h2>Results for Player ID: {selectedPlayerIdForView}</h2>
+                {/* --- Player Action Buttons Container - Only show if admin unlocked --- */}
+                {isAdminUnlocked && (
+                  <div style={{ marginBottom: '15px' }}> 
+                    {/* Transfer Button */}
+                    <button 
+                      onClick={() => openTransferModal(selectedPlayerIdForView)}
+                      className="button button-secondary button-small"
+                    >
+                      Transfer Age Group...
+                    </button>
+                    {/* Delete Button */}
+                    <button 
+                      onClick={() => handleDeletePlayer(selectedPlayerIdForView)}
+                      className="button button-danger button-small"
+                      style={{ marginLeft: '10px' }} // Add space between buttons
+                    >
+                      🗑️ Delete Player
+                    </button>
+                  </div>
+                )}
+                {/* --- End Player Action Buttons Container --- */}
+
+                {resultsLoading && <p>Loading results...</p>}
+                {resultsError && <p className="message error">{resultsError}</p>}
+                {!resultsLoading && !resultsError && selectedPlayerResults.length > 0 && (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Drill Type</th>
+                        <th>Raw Score</th>
+                        <th>Normalized Score</th>
+                        <th>Actions</th>{/* <-- ADDED Actions Header */} 
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedPlayerResults.map((result) => (
+                        <tr key={result.id}>
+                          <td>{result.drill_type.replace(/_/g, ' ').toUpperCase()}</td>
+                          {/* Conditional rendering for Raw Score cell */} 
+                          <td>
+                            {editingResultId === result.id ? (
+                              <input 
+                                type="text" // Use text to allow various formats like "7/10"
+                                value={editingRawScore}
+                                onChange={(e) => setEditingRawScore(e.target.value)}
+                                // Basic styling example
+                                style={{ width: '80px', padding: '2px' }} 
+                              />
+                            ) : (
+                              result.raw_score
+                            )}
+                          </td>
+                          <td>{result.normalized_score !== null ? result.normalized_score.toFixed(0) : 'N/A'}</td>{/* Keep normalized score read-only */}
+                          {/* Actions Cell - Only show if admin unlocked */} 
+                          <td>
+                            {isAdminUnlocked && (
+                              <>
+                                <button 
+                                  onClick={() => { 
+                                    setEditingResultId(result.id); 
+                                    setEditingRawScore(result.raw_score); 
+                                    setEditError(''); // Clear error when starting edit
+                                  }}
+                                  className="button button-small button-link-style" // Example styling
+                                >
+                                  ✏️ Edit
+                                </button>
+                                {/* Add Delete Button - Show only when NOT editing */}
+                                <button 
+                                  onClick={() => handleDeleteDrillResult(result.id)}
+                                  className="button button-small button-danger button-link-style" // Example styling
+                                  style={{ marginLeft: '10px' }} // Add some space
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                {!resultsLoading && !resultsError && selectedPlayerResults.length === 0 && (
+                  <p>No drill results found for this player.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <hr />
+
+          {/* Rankings Viewer */}
+          <div className="rankings-section">
+            <h1>Player Rankings</h1>
+            <div>
+                <label htmlFor="ageGroupSelect">Select Age Group:</label>
+                <select
+                    id="ageGroupSelect"
+                    value={selectedAgeGroup}
+                    onChange={(e) => setSelectedAgeGroup(e.target.value)}
+                >
+                    {AGE_GROUPS.map((group) => (
+                        <option key={group} value={group}>
+                            {group === "" ? "-- Select Age Group --" : group}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {selectedAgeGroup && (
+                <div>
+                    <h2>Rankings for Age Group: {selectedAgeGroup}</h2>
+                    {rankingsLoading && <p>Loading rankings...</p>}
+                    {rankingsError && <p className="message error">{rankingsError}</p>}
+                    {!rankingsLoading && !rankingsError && rankings.length > 0 && (
+                        <div className="rankings-table-container"> {/* NEW: Wrapper div */}
+                            {/* --- Desktop: Column Toggles (Grouped by Category) --- */}
+                            <div className="desktop-column-toggles">
+                                <span>Show/Hide Drills:</span>
+                                {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => (
+                                    <div key={category} className="toggle-category-group">
+                                        <strong>{category}:</strong>
+                                        {drills.map(key => (
+                                            <label key={key} className={`toggle-label ${visibleDrillColumns[key] ? 'visible' : ''}`} title={`Toggle ${key.replace(/_/g, ' ').toUpperCase()}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={visibleDrillColumns[key] ?? false} // Handle potential undefined keys gracefully
+                                                    onChange={() => toggleDrillColumn(key)}
+                                                />
                                                 {key.replace(/_/g, ' ').toUpperCase()}
-                                            </th>
-                                        )
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rankings.map((player) => (
-                                    <tr key={player.id}>
-                                        <td className="sticky-col rank-col">{player.rank}</td>
-                                        <td className="sticky-col name-col">{player.name}</td>
-                                        <td>{player.number}</td>
-                                        <td>{player.age}</td>
-                                        <td>{player.composite_score.toFixed(2)}</td>
-                                        {/* Drill Data Cells */}
+                                            </label>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* --- Desktop: Wide Table --- */}
+                            <table className="rankings-table desktop-view">
+                                <thead>
+                                    {/* Row 1: Base Headers + Category Headers */}
+                                    <tr>
+                                        <th rowSpan="2" className="sticky-col rank-col">Rank</th>
+                                        <th rowSpan="2" className="sticky-col name-col">Name</th>
+                                        <th rowSpan="2">Number</th>
+                                        <th rowSpan="2">Age</th>
+                                        <th rowSpan="2" title="Score calculated using default weightings across all recorded drills.">Composite Score</th>
+                                        {/* Category Headers */}
+                                        {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
+                                            const visibleDrillsInCategory = drills.filter(key => visibleDrillColumns[key]);
+                                            if (visibleDrillsInCategory.length === 0) return null; // Don't render category header if no drills are visible
+                                            return (
+                                                <th key={category} colSpan={visibleDrillsInCategory.length} className="category-header">
+                                                    {category}
+                                                </th>
+                                            );
+                                        })}
+                                    </tr>
+                                    {/* Row 2: Individual Drill Headers */}
+                                    <tr>
                                         {ALL_DRILL_KEYS.map(key => (
                                             visibleDrillColumns[key] && (
-                                                <td key={key}>
-                                                    {/* Access drill data - adjust path if needed based on backend response */}
-                                                    {player.drills?.[key] !== undefined ? player.drills[key] : 'N/A'}
-                                                </td>
+                                                <th key={key} title={key.replace(/_/g, ' ').toUpperCase()} className="drill-header">
+                                                    {/* Use abbreviation or shorter name if needed */}
+                                                    {key.replace(/_/g, ' ').toUpperCase()}
+                                                </th>
                                             )
                                         ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {rankings.map((player) => (
+                                        <tr key={player.id}>
+                                            <td className="sticky-col rank-col">{player.rank}</td>
+                                            <td className="sticky-col name-col">{player.name}</td>
+                                            <td>{player.number}</td>
+                                            <td>{player.age}</td>
+                                            <td>{player.composite_score.toFixed(2)}</td>
+                                            {/* Drill Data Cells */}
+                                            {ALL_DRILL_KEYS.map(key => (
+                                                visibleDrillColumns[key] && (
+                                                    <td key={key}>
+                                                        {/* Access drill data - adjust path if needed based on backend response */}
+                                                        {player.drills?.[key] !== undefined ? player.drills[key] : 'N/A'}
+                                                    </td>
+                                                )
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
 
-                        {/* --- Mobile: Card View --- */}
-                        <div className="rankings-cards mobile-view">
-                            {rankings.map((player) => (
-                                <div key={player.id} className="player-card">
-                                    <div className="player-card-header">
-                                        <span className="rank">{player.rank}.</span>
-                                        <span className="name">{player.name}</span>
-                                        <span className="score">Score: {player.composite_score.toFixed(2)}</span>
-                                    </div>
-                                    <details className="player-card-details">
-                                        <summary>View Details</summary>
-                                        {/* Basic Info */}
-                                        <div className="card-section">
-                                            <p><strong>Number:</strong> {player.number}</p>
-                                            <p><strong>Age:</strong> {player.age}</p>
+                            {/* --- Mobile: Card View --- */}
+                            <div className="rankings-cards mobile-view">
+                                {rankings.map((player) => (
+                                    <div key={player.id} className="player-card">
+                                        <div className="player-card-header">
+                                            <span className="rank">{player.rank}.</span>
+                                            <span className="name">{player.name}</span>
+                                            <span className="score">Score: {player.composite_score.toFixed(2)}</span>
                                         </div>
-                                        {/* Drills Grouped by Category */}
-                                        {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
-                                            // Filter drills for this category that exist in the player data
-                                            const relevantDrills = drills.filter(key => player.drills?.[key] !== undefined);
-                                            if (relevantDrills.length === 0) return null; // Don't show empty categories
+                                        <details className="player-card-details">
+                                            <summary>View Details</summary>
+                                            {/* Basic Info */}
+                                            <div className="card-section">
+                                                <p><strong>Number:</strong> {player.number}</p>
+                                                <p><strong>Age:</strong> {player.age}</p>
+                                            </div>
+                                            {/* Drills Grouped by Category */}
+                                            {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
+                                                // Filter drills for this category that exist in the player data
+                                                const relevantDrills = drills.filter(key => player.drills?.[key] !== undefined);
+                                                if (relevantDrills.length === 0) return null; // Don't show empty categories
 
-                                            return (
-                                                <div key={category} className="card-section">
-                                                    <h4 className="card-category-header">{category}</h4>
-                                                    {relevantDrills.map(key => (
-                                                        <p key={key}>
-                                                            <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
-                                                            {player.drills[key]} 
-                                                        </p>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })}
-                                        {/* --- NEW: Section for Other/Uncategorized Drills --- */}
-                                        {(() => {
-                                            const categorizedKeys = new Set(ALL_DRILL_KEYS);
-                                            const otherDrills = Object.keys(player.drills || {}).filter(key => !categorizedKeys.has(key));
-                                            
-                                            if (otherDrills.length > 0) {
                                                 return (
-                                                    <div key="other-drills" className="card-section">
-                                                        <h4 className="card-category-header">Other Drills</h4>
-                                                        {otherDrills.map(key => (
+                                                    <div key={category} className="card-section">
+                                                        <h4 className="card-category-header">{category}</h4>
+                                                        {relevantDrills.map(key => (
                                                             <p key={key}>
                                                                 <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
                                                                 {player.drills[key]} 
@@ -1304,267 +1291,290 @@ function App() {
                                                         ))}
                                                     </div>
                                                 );
-                                            }
-                                            return null;
-                                        })()}
-                                        {/* --- END Other Drills Section --- */}
-                                    </details>
-                                </div>
-                            ))}
+                                            })}
+                                            {/* --- NEW: Section for Other/Uncategorized Drills --- */}
+                                            {(() => {
+                                                const categorizedKeys = new Set(ALL_DRILL_KEYS);
+                                                const otherDrills = Object.keys(player.drills || {}).filter(key => !categorizedKeys.has(key));
+                                                
+                                                if (otherDrills.length > 0) {
+                                                    return (
+                                                        <div key="other-drills" className="card-section">
+                                                            <h4 className="card-category-header">Other Drills</h4>
+                                                            {otherDrills.map(key => (
+                                                                <p key={key}>
+                                                                    <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                                                                    {player.drills[key]} 
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                            {/* --- END Other Drills Section --- */}
+                                        </details>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
-                {!rankingsLoading && !rankingsError && rankings.length === 0 && (
-                    <p>No players found or ranked in this age group.</p>
-                )}
-            </div>
-        )}
-
-        {/* Export Controls */} 
-        {selectedAgeGroup && (
-            <div className="export-controls" style={{ marginTop: '1em' }}>
-                <div className="radio-group">
-                  <label>
-                      <input 
-                          type="radio" 
-                          name="exportFormat" 
-                          value="csv"
-                          checked={exportFormat === 'csv'}
-                          onChange={() => setExportFormat('csv')}
-                      /> CSV
-                  </label>
-                  <label>
-                      <input 
-                          type="radio" 
-                          name="exportFormat" 
-                          value="pdf"
-                          checked={exportFormat === 'pdf'}
-                          onChange={() => setExportFormat('pdf')}
-                      /> PDF
-                  </label>
+                    )}
+                    {!rankingsLoading && !rankingsError && rankings.length === 0 && (
+                        <p>No players found or ranked in this age group.</p>
+                    )}
                 </div>
-                <button onClick={handleExport}>Export Report</button>
-            </div>
-        )}
-      </div>
+            )}
 
-      {/* --- NEW: Combined & Collapsible Admin Tools Section --- */}
-      <div className="admin-tools-container" style={{ marginTop: '30px', borderTop: '2px solid #eee', paddingTop: '15px' }}>
-        {!isAdminUnlocked && !showAdminPasswordPrompt && (
-          <button
-            onClick={() => { setShowAdminPasswordPrompt(true); setAdminPasswordError(''); }} // Show prompt on click
-            className="button-link-style" // Use link style for low emphasis
-          >
-            Show Admin Tools ▼
-          </button>
-        )}
+            {/* Export Controls */} 
+            {selectedAgeGroup && (
+                <div className="export-controls" style={{ marginTop: '1em' }}>
+                    <div className="radio-group">
+                      <label>
+                          <input 
+                              type="radio" 
+                              name="exportFormat" 
+                              value="csv"
+                              checked={exportFormat === 'csv'}
+                              onChange={() => setExportFormat('csv')}
+                          /> CSV
+                      </label>
+                      <label>
+                          <input 
+                              type="radio" 
+                              name="exportFormat" 
+                              value="pdf"
+                              checked={exportFormat === 'pdf'}
+                              onChange={() => setExportFormat('pdf')}
+                          /> PDF
+                      </label>
+                    </div>
+                    <button onClick={handleExport}>Export Report</button>
+                </div>
+            )}
+          </div>
 
-        {/* --- Password Prompt Form --- */}
-        {showAdminPasswordPrompt && !isAdminUnlocked && (
-          <form onSubmit={handleAdminPasswordSubmit} style={{ marginBottom: '10px', paddingLeft: '10px' }}>
-            <label htmlFor="adminPassword" style={{ marginRight: '5px' }}>Admin Password:</label>
-            <input
-              type="password"
-              id="adminPassword"
-              value={adminPasswordInput}
-              onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminPasswordError(''); }}
-              required
-              style={{ marginRight: '5px' }}
-            />
-            <button type="submit" className="button button-small">Unlock</button>
-            <button 
-              type="button" 
-              onClick={() => { setShowAdminPasswordPrompt(false); setAdminPasswordInput(''); setAdminPasswordError(''); }} 
-              className="button button-small button-secondary" 
-              style={{ marginLeft: '5px' }}
-            >
-              Cancel
-            </button>
-            {adminPasswordError && <p className="message error" style={{ fontSize: '0.9em', marginTop: '5px' }}>{adminPasswordError}</p>}
-          </form>
-        )}
+          {/* --- NEW: Combined & Collapsible Admin Tools Section --- */}
+          <div className="admin-tools-container" style={{ marginTop: '30px', borderTop: '2px solid #eee', paddingTop: '15px' }}>
+            {!isAdminUnlocked && !showAdminPasswordPrompt && (
+              <button
+                onClick={() => { setShowAdminPasswordPrompt(true); setAdminPasswordError(''); }} // Show prompt on click
+                className="button-link-style" // Use link style for low emphasis
+              >
+                Show Admin Tools ▼
+              </button>
+            )}
 
-        {/* --- Admin Tools Content (Only shown when unlocked) --- */}
-        {isAdminUnlocked && (
-          <>
-            {/* Button to HIDE tools again (optional, could just rely on refresh) */}
-            <button
-              onClick={() => setIsAdminUnlocked(false)} // Simple hide, requires password again
-              className="button-link-style"
-              style={{ marginBottom: '10px' }}
-            >
-              Hide Admin Tools ▲
-            </button>
-
-            <div style={{ marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #eee' }}>
-              {/* --- MOVED: CSV Upload SECTION --- */}
-              <div className="collapsible-section" style={{ padding: '15px', marginTop: '10px', backgroundColor: '#f9f9f9', border: '1px solid #ddd' }}>
+            {/* --- Password Prompt Form --- */}
+            {showAdminPasswordPrompt && !isAdminUnlocked && (
+              <form onSubmit={handleAdminPasswordSubmit} style={{ marginBottom: '10px', paddingLeft: '10px' }}>
+                <label htmlFor="adminPassword" style={{ marginRight: '5px' }}>Admin Password:</label>
+                <input
+                  type="password"
+                  id="adminPassword"
+                  value={adminPasswordInput}
+                  onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminPasswordError(''); }}
+                  required
+                  style={{ marginRight: '5px' }}
+                />
+                <button type="submit" className="button button-small">Unlock</button>
                 <button 
-                  onClick={() => setIsCsvSectionVisible(!isCsvSectionVisible)}
-                  className="button-link-style" // Also use link style here
-                  style={{ marginBottom: '10px', fontWeight: 'bold' }}
+                  type="button" 
+                  onClick={() => { setShowAdminPasswordPrompt(false); setAdminPasswordInput(''); setAdminPasswordError(''); }} 
+                  className="button button-small button-secondary" 
+                  style={{ marginLeft: '5px' }}
                 >
-                  {isCsvSectionVisible ? 'Hide Bulk Upload Tool ▲' : 'Show Bulk Upload Tool ▼'}
+                  Cancel
                 </button>
-                {isCsvSectionVisible && (
-                  <div className="form-section" style={{ marginTop: '0', paddingTop: '10px', borderTop: '1px solid #eee' }}>
-                    <h3 style={{ fontSize: '1.1em', marginBottom: '10px' }}>Upload Players via CSV</h3>
-                    <form onSubmit={handleCsvUpload}>
-                      <div>
-                        <label htmlFor="csvFileInput">Select CSV File:</label>
-                        <input
-                          type="file"
-                          id="csvFileInput"
-                          accept=".csv"
-                          onChange={handleCsvFileChange}
-                        />
-                      </div>
-                      <button type="submit" disabled={isUploadingCsv || !csvFile} className="button button-small">
-                        {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
-                      </button>
-                    </form>
-                    {uploadError && <p className="message error">{uploadError}</p>}
-                    {uploadSummary && (
-                      <div className="message summary">
-                        <h4>Upload Summary</h4>
-                        <p>Processed Rows: {uploadSummary.processed_rows}</p>
-                        <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
-                        <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
-                        {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
+                {adminPasswordError && <p className="message error" style={{ fontSize: '0.9em', marginTop: '5px' }}>{adminPasswordError}</p>}
+              </form>
+            )}
+
+            {/* --- Admin Tools Content (Only shown when unlocked) --- */}
+            {isAdminUnlocked && (
+              <>
+                {/* Button to HIDE tools again (optional, could just rely on refresh) */}
+                <button
+                  onClick={() => setIsAdminUnlocked(false)} // Simple hide, requires password again
+                  className="button-link-style"
+                  style={{ marginBottom: '10px' }}
+                >
+                  Hide Admin Tools ▲
+                </button>
+
+                <div style={{ marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #eee' }}>
+                  {/* --- MOVED: CSV Upload SECTION --- */}
+                  <div className="collapsible-section" style={{ padding: '15px', marginTop: '10px', backgroundColor: '#f9f9f9', border: '1px solid #ddd' }}>
+                    <button 
+                      onClick={() => setIsCsvSectionVisible(!isCsvSectionVisible)}
+                      className="button-link-style" // Also use link style here
+                      style={{ marginBottom: '10px', fontWeight: 'bold' }}
+                    >
+                      {isCsvSectionVisible ? 'Hide Bulk Upload Tool ▲' : 'Show Bulk Upload Tool ▼'}
+                    </button>
+                    {isCsvSectionVisible && (
+                      <div className="form-section" style={{ marginTop: '0', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                        <h3 style={{ fontSize: '1.1em', marginBottom: '10px' }}>Upload Players via CSV</h3>
+                        <form onSubmit={handleCsvUpload}>
                           <div>
-                            <h5>Skipped Row Details:</h5>
-                            <ul>
-                              {uploadSummary.skipped_details.map((skip, index) => (
-                                <li key={index} style={{fontSize: '0.9em'}}>Row {skip.row}: {skip.reason}</li>
-                              ))}
-                            </ul>
+                            <label htmlFor="csvFileInput">Select CSV File:</label>
+                            <input
+                              type="file"
+                              id="csvFileInput"
+                              accept=".csv"
+                              onChange={handleCsvFileChange}
+                            />
+                          </div>
+                          <button type="submit" disabled={isUploadingCsv || !csvFile} className="button button-small">
+                            {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+                          </button>
+                        </form>
+                        {uploadError && <p className="message error">{uploadError}</p>}
+                        {uploadSummary && (
+                          <div className="message summary">
+                            <h4>Upload Summary</h4>
+                            <p>Processed Rows: {uploadSummary.processed_rows}</p>
+                            <p>✅ Successfully Imported: {uploadSummary.imported_count}</p>
+                            <p>⚠️ Skipped Rows: {uploadSummary.skipped_count}</p>
+                            {uploadSummary.skipped_count > 0 && uploadSummary.skipped_details && (
+                              <div>
+                                <h5>Skipped Row Details:</h5>
+                                <ul>
+                                  {uploadSummary.skipped_details.map((skip, index) => (
+                                    <li key={index} style={{fontSize: '0.9em'}}>Row {skip.row}: {skip.reason}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-              {/* --- End MOVED CSV Upload Section --- */}
+                  {/* --- End MOVED CSV Upload Section --- */}
 
-              {/* --- MOVED: Player Reset Section (Now Collapsible) --- */}
-              <div style={{ marginTop: '20px' }}> {/* Container for the reset toggle and section */} 
-                <button 
-                  onClick={() => setShowResetTool(!showResetTool)}
-                  className="button-link-style" // Use link style for low emphasis
-                  style={{ marginBottom: '10px' }}
-                >
-                  {showResetTool ? 'Hide Reset Tool ▲' : 'Show Reset Tool ▼'}
-                </button>
-
-                {showResetTool && (
-                  <section className="admin-section" style={{marginTop: '5px'}}> {/* Keep original styling, reduce top margin */} 
-                    <h4>Reset Data</h4>
-                    <p>Warning: This action is permanent and cannot be undone.</p>
-                    <button
-                      onClick={openResetModal}
-                      className="button button-danger button-small" // Keep existing danger/small style
-                      disabled={isResetting}
+                  {/* --- MOVED: Player Reset Section (Now Collapsible) --- */}
+                  <div style={{ marginTop: '20px' }}> {/* Container for the reset toggle and section */} 
+                    <button 
+                      onClick={() => setShowResetTool(!showResetTool)}
+                      className="button-link-style" // Use link style for low emphasis
+                      style={{ marginBottom: '10px' }}
                     >
-                      {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
+                      {showResetTool ? 'Hide Reset Tool ▲' : 'Show Reset Tool ▼'}
                     </button>
-                  </section>
-                )}
+
+                    {showResetTool && (
+                      <section className="admin-section" style={{marginTop: '5px'}}> {/* Keep original styling, reduce top margin */} 
+                        <h4>Reset Data</h4>
+                        <p>Warning: This action is permanent and cannot be undone.</p>
+                        <button
+                          onClick={openResetModal}
+                          className="button button-danger button-small" // Keep existing danger/small style
+                          disabled={isResetting}
+                        >
+                          {isResetting ? 'Resetting...' : 'Reset All Players & Results'}
+                        </button>
+                      </section>
+                    )}
+                  </div>
+                  {/* --- End MOVED Player Reset Section --- */}
+                </div>
+              </>
+            )}
+          </div>
+          {/* --- End Combined Admin Tools Section --- */}
+
+          {/* --- Reset Confirmation Modal (Remains unchanged) --- */}
+          {isResetModalOpen && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>Confirm Reset</h2>
+                <p><strong>Warning:</strong> This action will permanently delete <strong>all players</strong> and <strong>all associated drill results</strong> from the system.</p>
+                <p>This cannot be undone.</p>
+                <p>To proceed, please type <strong>REMOVE</strong> in the box below:</p>
+                <input
+                  type="text"
+                  value={resetConfirmationText}
+                  onChange={(e) => {
+                      setResetConfirmationText(e.target.value);
+                      // Clear error as user types
+                      if (resetError) setResetError(''); 
+                  }}
+                  placeholder="Type REMOVE here"
+                  className={resetError && resetConfirmationText !== 'REMOVE' ? 'input-error' : ''}
+                />
+                {/* Display error message inside modal */}
+                {resetError && <p className="modal-error">{resetError}</p>}
+                
+                <div className="modal-actions">
+                  <button onClick={closeResetModal} className="button" disabled={isResetting}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResetConfirm}
+                    className="button button-danger"
+                    disabled={resetConfirmationText !== 'REMOVE' || isResetting}
+                  >
+                    {isResetting ? 'Resetting...' : 'Confirm Reset'}
+                  </button>
+                </div>
               </div>
-              {/* --- End MOVED Player Reset Section --- */}
             </div>
-          </>
-        )}
+          )}
+          {/* --- End Reset Confirmation Modal --- */}
+
+          {/* --- >>> NEW: Player Transfer Modal <<< --- */}
+          {isTransferModalOpen && playerToTransfer && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>Transfer Player Age Group</h2>
+                <p>Transferring: <strong>{playerToTransfer.name} (#{playerToTransfer.number})</strong></p>
+                <p>Current Age Group: <strong>{playerToTransfer.age_group}</strong></p>
+                
+                <div style={{ margin: '15px 0' }}>
+                  <label htmlFor="newAgeGroupSelect">Select New Age Group:</label>
+                  <select
+                    id="newAgeGroupSelect"
+                    value={selectedNewAgeGroup}
+                    onChange={(e) => {
+                      setSelectedNewAgeGroup(e.target.value);
+                      if (transferError) setTransferError(''); // Clear error on change
+                    }}
+                    required
+                    style={{ marginLeft: '10px', padding: '5px' }}
+                  >
+                    <option value="" disabled>-- Select New Group --</option>
+                    {AGE_GROUPS.filter(group => group !== '' && group !== playerToTransfer.age_group).map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {transferError && <p className="modal-error">{transferError}</p>}
+                
+                <div className="modal-actions">
+                  <button onClick={handleCancelTransfer} className="button" disabled={isTransferring}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTransferConfirm}
+                    className="button button-primary" // Use primary style for confirm
+                    disabled={!selectedNewAgeGroup || isTransferring || selectedNewAgeGroup === playerToTransfer.age_group}
+                  >
+                    {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* --- <<< END NEW PLAYER TRANSFER MODAL >>> --- */}
+        </div>
+        <div className="login-footer">
+          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
+        </div>
       </div>
-      {/* --- End Combined Admin Tools Section --- */}
-
-      {/* --- Reset Confirmation Modal (Remains unchanged) --- */}
-      {isResetModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Confirm Reset</h2>
-            <p><strong>Warning:</strong> This action will permanently delete <strong>all players</strong> and <strong>all associated drill results</strong> from the system.</p>
-            <p>This cannot be undone.</p>
-            <p>To proceed, please type <strong>REMOVE</strong> in the box below:</p>
-            <input
-              type="text"
-              value={resetConfirmationText}
-              onChange={(e) => {
-                  setResetConfirmationText(e.target.value);
-                  // Clear error as user types
-                  if (resetError) setResetError(''); 
-              }}
-              placeholder="Type REMOVE here"
-              className={resetError && resetConfirmationText !== 'REMOVE' ? 'input-error' : ''}
-            />
-            {/* Display error message inside modal */}
-            {resetError && <p className="modal-error">{resetError}</p>}
-            
-            <div className="modal-actions">
-              <button onClick={closeResetModal} className="button" disabled={isResetting}>
-                Cancel
-              </button>
-              <button
-                onClick={handleResetConfirm}
-                className="button button-danger"
-                disabled={resetConfirmationText !== 'REMOVE' || isResetting}
-              >
-                {isResetting ? 'Resetting...' : 'Confirm Reset'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* --- End Reset Confirmation Modal --- */}
-
-      {/* --- >>> NEW: Player Transfer Modal <<< --- */}
-      {isTransferModalOpen && playerToTransfer && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Transfer Player Age Group</h2>
-            <p>Transferring: <strong>{playerToTransfer.name} (#{playerToTransfer.number})</strong></p>
-            <p>Current Age Group: <strong>{playerToTransfer.age_group}</strong></p>
-            
-            <div style={{ margin: '15px 0' }}>
-              <label htmlFor="newAgeGroupSelect">Select New Age Group:</label>
-              <select
-                id="newAgeGroupSelect"
-                value={selectedNewAgeGroup}
-                onChange={(e) => {
-                  setSelectedNewAgeGroup(e.target.value);
-                  if (transferError) setTransferError(''); // Clear error on change
-                }}
-                required
-                style={{ marginLeft: '10px', padding: '5px' }}
-              >
-                <option value="" disabled>-- Select New Group --</option>
-                {AGE_GROUPS.filter(group => group !== '' && group !== playerToTransfer.age_group).map((group) => (
-                  <option key={group} value={group}>
-                    {group}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {transferError && <p className="modal-error">{transferError}</p>}
-            
-            <div className="modal-actions">
-              <button onClick={handleCancelTransfer} className="button" disabled={isTransferring}>
-                Cancel
-              </button>
-              <button
-                onClick={handleTransferConfirm}
-                className="button button-primary" // Use primary style for confirm
-                disabled={!selectedNewAgeGroup || isTransferring || selectedNewAgeGroup === playerToTransfer.age_group}
-              >
-                {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* --- <<< END NEW PLAYER TRANSFER MODAL >>> --- */}
-    </AppLayout>
+    </div>
   );
 }
 

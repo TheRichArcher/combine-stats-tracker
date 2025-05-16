@@ -229,202 +229,240 @@ function CoachDashboard({ user }) {
   };
 
   // --- Render Logic ---
-  if (loading) return <AppLayout><Spinner /></AppLayout>;
-  if (error) return <AppLayout><div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div></AppLayout>;
+  if (loading) return (
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
+        </div>
+        <div className="card-content">
+          <Spinner />
+        </div>
+        <div className="login-footer">
+          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
+        </div>
+      </div>
+    </div>
+  );
+  if (error) return (
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
+        </div>
+        <div className="card-content">
+          <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>
+        </div>
+        <div className="login-footer">
+          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <AppLayout>
-      <h1>Coach's Dashboard</h1>
-      <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
-        <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. 
-        It does <strong>not</strong> change official player results or rankings.
-      </p>
+    <div className="login-outer-container">
+      <div className="login-card fade-in">
+        <div className="login-logo">
+          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
+        </div>
+        <div className="card-content">
+          <h1>Coach's Dashboard</h1>
+          <p style={{ fontStyle: 'italic', color: 'red', border: '1px solid red', padding: '10px', marginBottom: '20px' }}>
+            <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. 
+            It does <strong>not</strong> change official player results or rankings.
+          </p>
 
-      {/* Weight Adjustment Controls */}
-      <div className="form-section weight-controls">
-        <h2>Adjust Drill Weights (%)</h2>
-        {Object.entries(DRILL_TYPES).map(([key, drillType]) => (
-          <div key={drillType} className="weight-slider">
-            <label htmlFor={`weight-${drillType}`}>{drillType.replace(/_/g, ' ').toUpperCase()}:</label>
-            <input 
-              type="range" 
-              id={`weight-${drillType}`} 
-              min="0" 
-              max="100" 
-              value={customWeights[drillType]}
-              onChange={(e) => handleWeightChange(drillType, e.target.value)} 
-              style={{ marginLeft: '10px', marginRight: '10px' }}
-            />
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={customWeights[drillType]}
-              onChange={(e) => handleWeightChange(drillType, e.target.value)}
-              style={{ width: '60px' }}
-            />
-            <span>%</span>
-          </div>
-        ))}
-        <button onClick={resetWeights} style={{ marginTop: '15px' }}>Reset Weights</button>
-      </div>
-
-      <hr />
-
-      {/* Player Table with Custom Scores */}
-      <div className="results-section">
-        <h2>Custom Player Rankings</h2>
-        
-        {/* Age Group Filter Dropdown */}
-        <div className="filter-section" style={{ marginBottom: '15px' }}>
-          <label htmlFor="ageGroupFilter" style={{ marginRight: '10px' }}>Filter by Age Group:</label>
-          <select 
-            id="ageGroupFilter" 
-            value={selectedAgeGroup} 
-            onChange={handleAgeGroupChange}
-          >
-            <option value="All">All</option>
-            {AGE_GROUPS.map(group => (
-              <option key={group} value={group}>{group}</option>
+          {/* Weight Adjustment Controls */}
+          <div className="form-section weight-controls">
+            <h2>Adjust Drill Weights (%)</h2>
+            {Object.entries(DRILL_TYPES).map(([key, drillType]) => (
+              <div key={drillType} className="weight-slider">
+                <label htmlFor={`weight-${drillType}`}>{drillType.replace(/_/g, ' ').toUpperCase()}:</label>
+                <input 
+                  type="range" 
+                  id={`weight-${drillType}`} 
+                  min="0" 
+                  max="100" 
+                  value={customWeights[drillType]}
+                  onChange={(e) => handleWeightChange(drillType, e.target.value)} 
+                  style={{ marginLeft: '10px', marginRight: '10px' }}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={customWeights[drillType]}
+                  onChange={(e) => handleWeightChange(drillType, e.target.value)}
+                  style={{ width: '60px' }}
+                />
+                <span>%</span>
+              </div>
             ))}
-          </select>
-        </div>
+            <button onClick={resetWeights} style={{ marginTop: '15px' }}>Reset Weights</button>
+          </div>
 
-        {/* --- NEW: Export Button --- */}
-        <div style={{ marginBottom: '15px' }}>
-          <button 
-            onClick={handleExportCustomCsv} 
-            disabled={filteredAndSortedPlayers.length === 0}
-            className="button button-secondary"
-          >
-            Download Custom Rankings (.CSV)
-          </button>
-        </div>
-        {/* --- End Export Button --- */}
+          <hr />
 
-        {filteredAndSortedPlayers.length > 0 ? (
-          <div className="coach-rankings-container"> {/* New top-level container */} 
-            {/* --- Desktop View: Existing Table --- */}
-            <div className="desktop-view"> 
-              <div className="table-container"> 
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th>Name</th>
-                      <th>Number</th>
-                      <th>Age Group</th>
-                      <th>Custom Composite Score</th>
-                      <th>Official Score</th>
-                      {/* Add headers for each drill type */}
-                      {Object.values(DRILL_TYPES).map(drillType => (
-                        <th key={drillType}>{drillType.replace(/_/g, ' ').toUpperCase()}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Use the filtered and sorted list */}
-                    {filteredAndSortedPlayers.map((player, index) => {
-                      // Extract best normalized scores for this player (similar to export logic)
-                      const playerResults = drillResults[player.id] || [];
-                      const bestNormalizedScores = {};
-                      playerResults.forEach(result => {
-                        if (result.normalized_score !== null) {
-                          const currentBest = bestNormalizedScores[result.drill_type] || -1;
-                          if (result.normalized_score > currentBest) {
-                            bestNormalizedScores[result.drill_type] = result.normalized_score;
-                          }
-                        }
-                      });
+          {/* Player Table with Custom Scores */}
+          <div className="results-section">
+            <h2>Custom Player Rankings</h2>
+            
+            {/* Age Group Filter Dropdown */}
+            <div className="filter-section" style={{ marginBottom: '15px' }}>
+              <label htmlFor="ageGroupFilter" style={{ marginRight: '10px' }}>Filter by Age Group:</label>
+              <select 
+                id="ageGroupFilter" 
+                value={selectedAgeGroup} 
+                onChange={handleAgeGroupChange}
+              >
+                <option value="All">All</option>
+                {AGE_GROUPS.map(group => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+            </div>
 
-                      return (
-                        <tr key={player.id} className={index === 0 ? 'top-player-row' : ''}>
-                          <td>{index === 0 ? <FaMedal className="medal-icon" title="Top Rank" /> : index + 1}</td>
-                          <td>{player.name}</td>
-                          <td>{player.number || 'N/A'}</td>
-                          <td>{player.age_group}</td>
-                          <td>{player.customCompositeScore.toFixed(2)}</td> 
-                          <td style={{ fontSize: '0.9em', color: '#666' }}>
-                            {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
-                              ? player.officialCompositeScore.toFixed(2) 
-                              : 'N/A'}
-                          </td>
-                          {/* Add data cells for each drill score */}
+            {/* --- NEW: Export Button --- */}
+            <div style={{ marginBottom: '15px' }}>
+              <button 
+                onClick={handleExportCustomCsv} 
+                disabled={filteredAndSortedPlayers.length === 0}
+                className="button button-secondary"
+              >
+                Download Custom Rankings (.CSV)
+              </button>
+            </div>
+            {/* --- End Export Button --- */}
+
+            {filteredAndSortedPlayers.length > 0 ? (
+              <div className="coach-rankings-container"> {/* New top-level container */} 
+                {/* --- Desktop View: Existing Table --- */}
+                <div className="desktop-view"> 
+                  <div className="table-container"> 
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Name</th>
+                          <th>Number</th>
+                          <th>Age Group</th>
+                          <th>Custom Composite Score</th>
+                          <th>Official Score</th>
+                          {/* Add headers for each drill type */}
                           {Object.values(DRILL_TYPES).map(drillType => (
-                            <td key={`${player.id}-${drillType}`}>
-                              {bestNormalizedScores[drillType] !== undefined ? bestNormalizedScores[drillType].toFixed(0) : '0'}
-                            </td>
+                            <th key={drillType}>{drillType.replace(/_/g, ' ').toUpperCase()}</th>
                           ))}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div> {/* Close table-container */}
-            </div> {/* Close desktop-view */}
-            
-            {/* --- Mobile View: Card Layout --- */}
-            <div className="rankings-cards mobile-view"> {/* Reuse class from App.css */}
-              {filteredAndSortedPlayers.map((player, index) => {
-                // Extract best normalized scores for the card view
-                const playerResults = drillResults[player.id] || [];
-                const bestNormalizedScores = {};
-                playerResults.forEach(result => {
-                  if (result.normalized_score !== null) {
-                    const currentBest = bestNormalizedScores[result.drill_type] || -1;
-                    if (result.normalized_score > currentBest) {
-                      bestNormalizedScores[result.drill_type] = result.normalized_score;
-                    }
-                  }
-                });
+                      </thead>
+                      <tbody>
+                        {/* Use the filtered and sorted list */}
+                        {filteredAndSortedPlayers.map((player, index) => {
+                          // Extract best normalized scores for this player (similar to export logic)
+                          const playerResults = drillResults[player.id] || [];
+                          const bestNormalizedScores = {};
+                          playerResults.forEach(result => {
+                            if (result.normalized_score !== null) {
+                              const currentBest = bestNormalizedScores[result.drill_type] || -1;
+                              if (result.normalized_score > currentBest) {
+                                bestNormalizedScores[result.drill_type] = result.normalized_score;
+                              }
+                            }
+                          });
 
-                return (
-                  <div key={player.id} className={`player-card${index === 0 ? ' top-player-card' : ''}`}>
-                    <div className="player-card-header">
-                      <span className="rank">{index === 0 ? <FaMedal className="medal-icon" title="Top Rank" /> : `${index + 1}.`}</span>
-                      <span className="name">{player.name}</span>
-                      <span className="score">Custom: {player.customCompositeScore.toFixed(2)}</span>
-                    </div>
-                    <details className="player-card-details">
-                      <summary className="details-toggle"><span>View Details</span><span className="toggle-icon">▼</span></summary>
-                      {/* Basic Info & Official Score */}
-                      <div className="card-section">
-                        <p><strong>Number:</strong> {player.number || 'N/A'}</p>
-                        <p><strong>Age Group:</strong> {player.age_group}</p>
-                        <p><strong>Official Score:</strong> {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined ? player.officialCompositeScore.toFixed(2) : 'N/A'}</p>
-                      </div>
-                      {/* Drills Grouped by Category */}
-                      {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
-                        // Find drills in this category that the player attempted
-                        const relevantDrills = drills.filter(key => bestNormalizedScores[key] !== undefined);
-                        if (relevantDrills.length === 0) return null; // Don't show empty categories
-                        
-                        return (
-                          <div key={category} className="card-section">
-                            <h4 className="card-category-header">{category}</h4>
-                            {relevantDrills.map(key => (
-                              <p key={key}>
-                                <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
-                                {bestNormalizedScores[key].toFixed(0)} {/* Display normalized score */}
-                              </p>
-                            ))}
+                          return (
+                            <tr key={player.id} className={index === 0 ? 'top-player-row' : ''}>
+                              <td>{index === 0 ? <FaMedal className="medal-icon" title="Top Rank" /> : index + 1}</td>
+                              <td>{player.name}</td>
+                              <td>{player.number || 'N/A'}</td>
+                              <td>{player.age_group}</td>
+                              <td>{player.customCompositeScore.toFixed(2)}</td> 
+                              <td style={{ fontSize: '0.9em', color: '#666' }}>
+                                {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined 
+                                  ? player.officialCompositeScore.toFixed(2) 
+                                  : 'N/A'}
+                              </td>
+                              {/* Add data cells for each drill score */}
+                              {Object.values(DRILL_TYPES).map(drillType => (
+                                <td key={`${player.id}-${drillType}`}>
+                                  {bestNormalizedScores[drillType] !== undefined ? bestNormalizedScores[drillType].toFixed(0) : '0'}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div> {/* Close table-container */}
+                </div> {/* Close desktop-view */}
+                
+                {/* --- Mobile View: Card Layout --- */}
+                <div className="rankings-cards mobile-view"> {/* Reuse class from App.css */}
+                  {filteredAndSortedPlayers.map((player, index) => {
+                    // Extract best normalized scores for the card view
+                    const playerResults = drillResults[player.id] || [];
+                    const bestNormalizedScores = {};
+                    playerResults.forEach(result => {
+                      if (result.normalized_score !== null) {
+                        const currentBest = bestNormalizedScores[result.drill_type] || -1;
+                        if (result.normalized_score > currentBest) {
+                          bestNormalizedScores[result.drill_type] = result.normalized_score;
+                        }
+                      }
+                    });
+
+                    return (
+                      <div key={player.id} className={`player-card${index === 0 ? ' top-player-card' : ''}`}>
+                        <div className="player-card-header">
+                          <span className="rank">{index === 0 ? <FaMedal className="medal-icon" title="Top Rank" /> : `${index + 1}.`}</span>
+                          <span className="name">{player.name}</span>
+                          <span className="score">Custom: {player.customCompositeScore.toFixed(2)}</span>
+                        </div>
+                        <details className="player-card-details">
+                          <summary className="details-toggle"><span>View Details</span><span className="toggle-icon">▼</span></summary>
+                          {/* Basic Info & Official Score */}
+                          <div className="card-section">
+                            <p><strong>Number:</strong> {player.number || 'N/A'}</p>
+                            <p><strong>Age Group:</strong> {player.age_group}</p>
+                            <p><strong>Official Score:</strong> {player.officialCompositeScore !== null && player.officialCompositeScore !== undefined ? player.officialCompositeScore.toFixed(2) : 'N/A'}</p>
                           </div>
-                        );
-                      })}
-                       {/* Handle potential uncategorized drills if needed, similar to App.jsx */}
-                    </details>
-                  </div>
-                );
-              })}
-            </div> {/* Close mobile-view */}
-          </div> /* Close coach-rankings-container */
-        ) : (
-          <div className="empty-state">
-            <div className="empty-message">No players found{selectedAgeGroup !== 'All' ? ` for ${selectedAgeGroup}` : ''}. Try adjusting the filters.</div>
+                          {/* Drills Grouped by Category */}
+                          {Object.entries(DRILL_CATEGORIES).map(([category, drills]) => {
+                            // Find drills in this category that the player attempted
+                            const relevantDrills = drills.filter(key => bestNormalizedScores[key] !== undefined);
+                            if (relevantDrills.length === 0) return null; // Don't show empty categories
+                            
+                            return (
+                              <div key={category} className="card-section">
+                                <h4 className="card-category-header">{category}</h4>
+                                {relevantDrills.map(key => (
+                                  <p key={key}>
+                                    <strong>{key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                                    {bestNormalizedScores[key].toFixed(0)} {/* Display normalized score */}
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          })}
+                           {/* Handle potential uncategorized drills if needed, similar to App.jsx */}
+                        </details>
+                      </div>
+                    );
+                  })}
+                </div> {/* Close mobile-view */}
+              </div> /* Close coach-rankings-container */
+            ) : (
+              <div className="empty-state">
+                <div className="empty-message">No players found{selectedAgeGroup !== 'All' ? ` for ${selectedAgeGroup}` : ''}. Try adjusting the filters.</div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+        <div className="login-footer">
+          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
+        </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }
 
