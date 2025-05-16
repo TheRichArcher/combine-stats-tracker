@@ -46,6 +46,7 @@ function Spinner() {
 }
 
 function CoachDashboard({ user }) {
+  console.log("🟢 Authenticated User:", user);
   const [players, setPlayers] = useState([]);
   const [drillResults, setDrillResults] = useState({}); // Store results keyed by player ID
   const [customWeights, setCustomWeights] = useState(OFFICIAL_DEFAULT_WEIGHTS); // Use official defaults
@@ -63,12 +64,17 @@ function CoachDashboard({ user }) {
         const playersResponse = await fetch(`${API_BASE_URL}/players/`);
         if (!playersResponse.ok) throw new Error(`HTTP error fetching players: ${playersResponse.status}`);
         const playersData = await playersResponse.json();
+        console.log("🟡 Fetched Players:", playersData);
         setPlayers(playersData);
 
         // 2. Fetch drill results for each player
         const resultsPromises = playersData.map(player => 
           fetch(`${API_BASE_URL}/players/${player.id}/results/`)
             .then(res => res.ok ? res.json() : Promise.reject(`HTTP error fetching results for player ${player.id}: ${res.status}`))
+            .then(resultData => {
+              console.log(`🔵 Drill Results for player ${player.id}:`, resultData);
+              return resultData;
+            })
             .catch(err => {
               console.error(err); // Log individual errors
               return []; // Return empty array on error for this player

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -79,7 +79,7 @@ export default function Login({ user }) {
           {error && <div className="login-error">{error}</div>}
         </form>
         <div className="login-footer">
-          Don't have an account? Contact us at <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>.
+          Don't have an account? <Link to="/signup">Sign up here</Link>
         </div>
       </div>
     </div>

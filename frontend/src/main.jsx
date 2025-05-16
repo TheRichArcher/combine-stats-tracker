@@ -5,6 +5,7 @@ import App from './App';
 import CoachesView from './CoachDashboard';
 import Login from './Login';
 import RequireAuth from './RequireAuth';
+import SignUp from './SignUp';
 // import PlayerDetail from './components/PlayerDetail';
 // import UploadPlayers from './components/UploadPlayers';
 import './App.css';
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/coaches" element={
           <RequireAuth>
             <CoachesView />
