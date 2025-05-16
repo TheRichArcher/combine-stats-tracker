@@ -34,4 +34,6 @@ backend/instance/
 # IDE/Editor specific
 .idea/
 .vscode/
-!.vscode/settings.json # Allow specific workspace settings 
+!.vscode/settings.json # Allow specific workspace settings AWSCLIV2.pkg
+Combine_Stats_Tracker_Final_Requirements.pdf
+README_CombineStats.md
