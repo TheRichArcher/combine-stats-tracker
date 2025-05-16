@@ -238,102 +238,80 @@ function CoachDashboard({ user }) {
 
   // --- Render Logic ---
   if (loading) return (
-    <div className="login-outer-container">
-      <div className="login-card fade-in">
-        <div className="login-logo">
-          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
-        </div>
-        <div className="card-content">
-          <Spinner />
-        </div>
-        <div className="login-footer">
-          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
-        </div>
-      </div>
-    </div>
+    <PageWrapper user={user} onLogout={handleLogout}>
+      <Spinner />
+    </PageWrapper>
   );
   if (error) return (
-    <div className="login-outer-container">
-      <div className="login-card fade-in">
-        <div className="login-logo">
-          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
-        </div>
-        <div className="card-content">
-          <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>
-        </div>
-        <div className="login-footer">
-          Woo-Combine © 2025 | Questions? <a href="mailto:support@woo-combine.com">support@woo-combine.com</a>
-        </div>
-      </div>
-    </div>
+    <PageWrapper user={user} onLogout={handleLogout}>
+      <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>
+    </PageWrapper>
   );
 
   return (
     <PageWrapper user={user} onLogout={handleLogout}>
-      <div className="card-content">
-        <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Coach's Dashboard</h1>
-        <div className="dashboard-warning">
-          <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. It <strong>does not</strong> change official player results or rankings.
-        </div>
-        {/* Weight Adjustment Controls */}
-        <div className="form-section weight-controls" style={{ marginBottom: 24 }}>
-          <h2 style={{ fontWeight: 600, color: '#0277bd', marginBottom: 12 }}>Adjust Drill Weights (%)</h2>
-          {Object.entries(DRILL_TYPES).map(([key, drillType]) => (
-            <div key={drillType} className="weight-slider">
-              <label htmlFor={`weight-${drillType}`}>{drillType.replace(/_/g, ' ').toUpperCase()}:</label>
-              <input 
-                type="range" 
-                id={`weight-${drillType}`} 
-                min="0" 
-                max="100" 
-                value={customWeights[drillType]}
-                onChange={(e) => handleWeightChange(drillType, e.target.value)} 
-              />
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={customWeights[drillType]}
-                onChange={(e) => handleWeightChange(drillType, e.target.value)}
-              />
-              <span>%</span>
-            </div>
-          ))}
-          <PrimaryButton type="button" onClick={resetWeights} className="secondary-action">Reset Weights</PrimaryButton>
-        </div>
-        <hr style={{ margin: '24px 0' }} />
-        {/* Player Table with Custom Scores */}
-        <div className="results-section">
-          <h2 style={{ fontWeight: 600, color: '#0277bd', marginBottom: 12 }}>Custom Player Rankings</h2>
-          {/* Age Group Filter Dropdown */}
-          <div className="filter-section" style={{ marginBottom: '15px' }}>
-            <label htmlFor="ageGroupFilter" style={{ marginRight: '10px' }}>Filter by Age Group:</label>
-            <select 
-              id="ageGroupFilter" 
-              value={selectedAgeGroup} 
-              onChange={handleAgeGroupChange}
-              className="login-input"
-              style={{ maxWidth: 180, display: 'inline-block' }}
-            >
-              <option value="All">All</option>
-              {AGE_GROUPS.map(group => (
-                <option key={group} value={group}>{group}</option>
-              ))}
-            </select>
+      <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Coach's Dashboard</h1>
+      <div className="dashboard-warning">
+        <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. It <strong>does not</strong> change official player results or rankings.
+      </div>
+      {/* Weight Adjustment Controls */}
+      <div className="form-section weight-controls" style={{ marginBottom: 24 }}>
+        <h2 style={{ fontWeight: 600, color: '#0277bd', marginBottom: 12 }}>Adjust Drill Weights (%)</h2>
+        {Object.entries(DRILL_TYPES).map(([key, drillType]) => (
+          <div key={drillType} className="weight-slider">
+            <label htmlFor={`weight-${drillType}`}>{drillType.replace(/_/g, ' ').toUpperCase()}:</label>
+            <input 
+              type="range" 
+              id={`weight-${drillType}`} 
+              min="0" 
+              max="100" 
+              value={customWeights[drillType]}
+              onChange={(e) => handleWeightChange(drillType, e.target.value)} 
+            />
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={customWeights[drillType]}
+              onChange={(e) => handleWeightChange(drillType, e.target.value)}
+            />
+            <span>%</span>
           </div>
-          {/* Export Button */}
-          <div style={{ marginBottom: '15px' }}>
-            <PrimaryButton 
-              onClick={handleExportCustomCsv} 
-              disabled={filteredAndSortedPlayers.length === 0}
-              className="primary-action"
-            >
-              Download Custom Rankings (.CSV)
-            </PrimaryButton>
-          </div>
-          {/* Rankings Table and Cards (existing code) */}
-          {/* ... keep the rest of the rankings rendering as is, but ensure all buttons/inputs use PrimaryButton/TextInput ... */}
+        ))}
+        <PrimaryButton type="button" onClick={resetWeights} className="secondary-action">Reset Weights</PrimaryButton>
+      </div>
+      <hr style={{ margin: '24px 0' }} />
+      {/* Player Table with Custom Scores */}
+      <div className="results-section">
+        <h2 style={{ fontWeight: 600, color: '#0277bd', marginBottom: 12 }}>Custom Player Rankings</h2>
+        {/* Age Group Filter Dropdown */}
+        <div className="filter-section" style={{ marginBottom: '15px' }}>
+          <label htmlFor="ageGroupFilter" style={{ marginRight: '10px' }}>Filter by Age Group:</label>
+          <select 
+            id="ageGroupFilter" 
+            value={selectedAgeGroup} 
+            onChange={handleAgeGroupChange}
+            className="login-input"
+            style={{ maxWidth: 180, display: 'inline-block' }}
+          >
+            <option value="All">All</option>
+            {AGE_GROUPS.map(group => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
         </div>
+        {/* Export Button */}
+        <div style={{ marginBottom: '15px' }}>
+          <PrimaryButton 
+            onClick={handleExportCustomCsv} 
+            disabled={filteredAndSortedPlayers.length === 0}
+            className="primary-action"
+          >
+            Download Custom Rankings (.CSV)
+          </PrimaryButton>
+        </div>
+        {/* Rankings Table and Cards (existing code) */}
+        {/* ... keep the rest of the rankings rendering as is, but ensure all buttons/inputs use PrimaryButton/TextInput ... */}
       </div>
     </PageWrapper>
   );

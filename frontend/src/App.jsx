@@ -897,104 +897,100 @@ function App({ user }) {
   // --- Render Logic ---
   if (playersLoading) return (
     <PageWrapper user={user} onLogout={handleLogout}>
-      <div className="card-content"><Spinner /></div>
+      <Spinner />
     </PageWrapper>
   );
   if (playersError) return (
     <PageWrapper user={user} onLogout={handleLogout}>
-      <div className="card-content">
-        <div className="login-error" style={{ marginBottom: '1em' }}>{playersError}</div>
-      </div>
+      <div className="login-error" style={{ marginBottom: '1em' }}>{playersError}</div>
     </PageWrapper>
   );
 
   return (
     <PageWrapper user={user} onLogout={handleLogout}>
-      <div className="card-content">
-        <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Create Player Profile</h1>
-        <form onSubmit={handlePlayerSubmit} className="login-form">
-          <TextInput
-            id="name"
-            type="text"
-            label="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            list="player-names-list"
+      <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Create Player Profile</h1>
+      <form onSubmit={handlePlayerSubmit} className="login-form">
+        <TextInput
+          id="name"
+          type="text"
+          label="Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          list="player-names-list"
+          required
+        />
+        <datalist id="player-names-list">
+          {allPlayers && allPlayers.map((player) => (
+            <option key={player.id} value={player.name} />
+          ))}
+        </datalist>
+        <div style={{ width: '100%' }}>
+          <label htmlFor="ageGroup">Age Group</label>
+          <select
+            id="ageGroup"
+            value={ageGroup}
+            onChange={e => setAgeGroup(e.target.value)}
             required
-          />
-          <datalist id="player-names-list">
-            {allPlayers && allPlayers.map((player) => (
-              <option key={player.id} value={player.name} />
+            className="login-input"
+            style={{ marginBottom: '1em' }}
+          >
+            {AGE_GROUPS.map((group) => (
+              <option key={group} value={group}>
+                {group === "" ? "-- Select Age Group --" : group}
+              </option>
             ))}
-          </datalist>
-          <div style={{ width: '100%' }}>
-            <label htmlFor="ageGroup">Age Group</label>
-            <select
-              id="ageGroup"
-              value={ageGroup}
-              onChange={e => setAgeGroup(e.target.value)}
-              required
-              className="login-input"
-              style={{ marginBottom: '1em' }}
-            >
-              {AGE_GROUPS.map((group) => (
-                <option key={group} value={group}>
-                  {group === "" ? "-- Select Age Group --" : group}
-                </option>
-              ))}
-            </select>
+          </select>
+        </div>
+        {/* Photo upload/camera logic remains, but use PrimaryButton for all buttons */}
+        <div style={{ width: '100%' }}>
+          <label>Photo:</label>
+          {!stream && (
+            <>
+              <PrimaryButton type="button" onClick={startCamera} style={{ width: 'auto', display: 'inline-block', marginRight: 8 }}>Start Camera</PrimaryButton>
+              <span> or </span>
+              <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'inline-block', marginLeft: 8 }} />
+            </>
+          )}
+        </div>
+        {stream && (
+          <div className="camera-container">
+            <video ref={videoRef} autoPlay playsInline muted style={{ maxWidth: '100%', height: 'auto' }}></video>
+            <PrimaryButton type="button" onClick={capturePhoto} style={{ marginRight: 8 }}>Capture Photo</PrimaryButton>
+            <PrimaryButton type="button" onClick={stopCameraStream}>Stop Camera</PrimaryButton>
           </div>
-          {/* Photo upload/camera logic remains, but use PrimaryButton for all buttons */}
-          <div style={{ width: '100%' }}>
-            <label>Photo:</label>
-            {!stream && (
-              <>
-                <PrimaryButton type="button" onClick={startCamera} style={{ width: 'auto', display: 'inline-block', marginRight: 8 }}>Start Camera</PrimaryButton>
-                <span> or </span>
-                <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'inline-block', marginLeft: 8 }} />
-              </>
-            )}
+        )}
+        <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+        {photoPreview && (
+          <div className="preview-container">
+            <p>Photo Preview:</p>
+            <img src={photoPreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
           </div>
-          {stream && (
-            <div className="camera-container">
-              <video ref={videoRef} autoPlay playsInline muted style={{ maxWidth: '100%', height: 'auto' }}></video>
-              <PrimaryButton type="button" onClick={capturePhoto} style={{ marginRight: 8 }}>Capture Photo</PrimaryButton>
-              <PrimaryButton type="button" onClick={stopCameraStream}>Stop Camera</PrimaryButton>
-            </div>
-          )}
-          <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
-          {photoPreview && (
-            <div className="preview-container">
-              <p>Photo Preview:</p>
-              <img src={photoPreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
-            </div>
-          )}
-          <PrimaryButton type="submit" loading={isSubmittingPlayer}>
-            Create Player
-          </PrimaryButton>
-          {playerMessage && playerMessage.includes('successfully!') && (
-            <div style={{ marginTop: '10px' }}>
-              <label htmlFor="generatedNumber">Number:</label>
-              <input
-                type="text"
-                id="generatedNumber"
-                readOnly
-                value={generatedPlayerNumber || ''}
-                placeholder="(Generating...)"
-                style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
-              />
-              <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
-                Generated After Creation
-              </em>
-              <p className="message" style={{ marginTop: '5px' }}>{playerMessage}</p>
-            </div>
-          )}
-          {playerMessage && !playerMessage.includes('successfully!') && (
-            <p className="message error">{playerMessage}</p>
-          )}
-        </form>
-        {/* ... Repeat for other forms/sections, using TextInput and PrimaryButton ... */}
-      </div>
+        )}
+        <PrimaryButton type="submit" loading={isSubmittingPlayer}>
+          Create Player
+        </PrimaryButton>
+        {playerMessage && playerMessage.includes('successfully!') && (
+          <div style={{ marginTop: '10px' }}>
+            <label htmlFor="generatedNumber">Number:</label>
+            <input
+              type="text"
+              id="generatedNumber"
+              readOnly
+              value={generatedPlayerNumber || ''}
+              placeholder="(Generating...)"
+              style={{ fontStyle: 'italic', backgroundColor: '#f0f0f0' }}
+            />
+            <em style={{ fontSize: '0.9em', color: '#666', marginLeft: '5px' }}>
+              Generated After Creation
+            </em>
+            <p className="message" style={{ marginTop: '5px' }}>{playerMessage}</p>
+          </div>
+        )}
+        {playerMessage && !playerMessage.includes('successfully!') && (
+          <p className="message error">{playerMessage}</p>
+        )}
+      </form>
+      {/* ... Repeat for other forms/sections, using TextInput and PrimaryButton ... */}
     </PageWrapper>
   );
 }
