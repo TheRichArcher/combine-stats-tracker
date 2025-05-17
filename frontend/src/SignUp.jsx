@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase';
-import PageWrapper from './PageWrapper';
 import PrimaryButton from './PrimaryButton';
 import TextInput from './TextInput';
 import { Link } from 'react-router-dom';
@@ -31,7 +30,7 @@ export default function SignUp() {
   };
 
   return (
-    <PageWrapper>
+    <>
       <form onSubmit={handleSignUp} className="login-form">
         <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Sign Up</h1>
         <TextInput
@@ -61,6 +60,6 @@ export default function SignUp() {
       <div className="login-footer">
         Already have an account? <Link to="/login">Sign in here</Link>
       </div>
-    </PageWrapper>
+    </>
   );
 } 
