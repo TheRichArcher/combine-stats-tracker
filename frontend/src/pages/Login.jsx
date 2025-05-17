@@ -54,6 +54,9 @@ const Login = () => {
       <div className="contact-note">
         Need help? <a href="mailto:support@woocombine.com">Contact us</a>
       </div>
+      <div className="login-footer">
+        Don&apos;t have an account? <a href="/signup">Sign up</a>
+      </div>
     </div>
   );
 };
