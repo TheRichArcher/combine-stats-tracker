@@ -4,7 +4,6 @@ import { saveAs } from 'file-saver'; // Import file-saver
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { FaMedal, FaExclamationCircle } from 'react-icons/fa';
-import PageWrapper from './PageWrapper';
 import PrimaryButton from './PrimaryButton';
 import TextInput from './TextInput';
 
@@ -237,19 +236,11 @@ function CoachDashboard({ user }) {
   };
 
   // --- Render Logic ---
-  if (loading) return (
-    <PageWrapper user={user} onLogout={handleLogout}>
-      <Spinner />
-    </PageWrapper>
-  );
-  if (error) return (
-    <PageWrapper user={user} onLogout={handleLogout}>
-      <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>
-    </PageWrapper>
-  );
+  if (loading) return <Spinner />;
+  if (error) return <div className="error-banner"><FaExclamationCircle className="error-icon" /> {error}</div>;
 
   return (
-    <PageWrapper user={user} onLogout={handleLogout}>
+    <>
       <h1 style={{ fontWeight: 600, fontSize: '2rem', marginBottom: 8 }}>Coach's Dashboard</h1>
       <div className="dashboard-warning">
         <strong>Coach View Only:</strong> Adjusting weights here recalculates scores <strong>locally</strong> for your view. It <strong>does not</strong> change official player results or rankings.
@@ -313,7 +304,7 @@ function CoachDashboard({ user }) {
         {/* Rankings Table and Cards (existing code) */}
         {/* ... keep the rest of the rankings rendering as is, but ensure all buttons/inputs use PrimaryButton/TextInput ... */}
       </div>
-    </PageWrapper>
+    </>
   );
 }
 
