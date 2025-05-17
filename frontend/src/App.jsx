@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Select from 'react-select'; // <-- Import react-select
 import './App.css'; // Basic styling
-import PageWrapper from './PageWrapper';
 import PrimaryButton from './PrimaryButton';
 import TextInput from './TextInput';
 import { AuthProvider } from './context/AuthContext';
@@ -10,6 +9,7 @@ import RequireAuth from './components/RequireAuth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Players from './pages/Players';
+import Layout from './layout/Layout';
 
 // --- Define Custom Error Class ---
 class HttpError extends Error {
@@ -60,38 +60,40 @@ function Spinner() {
 }
 
 const App = () => (
-  <AuthProvider>
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <Dashboard />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/coaches"
-          element={
-            <RequireAuth>
-              <Dashboard />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/players"
-          element={
-            <RequireAuth>
-              <Players />
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Router>
-  </AuthProvider>
+  <Router>
+    <AuthProvider>
+      <Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth fallback={<Spinner />}>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/coaches"
+            element={
+              <RequireAuth fallback={<Spinner />}>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/players"
+            element={
+              <RequireAuth fallback={<Spinner />}>
+                <Players />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Layout>
+    </AuthProvider>
+  </Router>
 );
 
 export default App; 

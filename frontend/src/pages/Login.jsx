@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import TextInput from '../components/TextInput';
 import PrimaryButton from '../components/PrimaryButton';
-import PageWrapper from '../layout/PageWrapper';
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,37 +26,35 @@ const Login = () => {
   };
 
   return (
-    <PageWrapper>
-      <div className="login-card">
-        <h2>Login</h2>
-        <form onSubmit={handleSubmit}>
-          <TextInput
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-          <TextInput
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          {error && <div className="error">{error}</div>}
-          <PrimaryButton type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </PrimaryButton>
-        </form>
-        <div className="login-links">
-          <a href="#">Forgot password?</a>
-        </div>
-        <div className="contact-note">
-          Need help? <a href="mailto:support@woocombine.com">Contact us</a>
-        </div>
+    <div className="login-card">
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <TextInput
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+        <TextInput
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        {error && <div className="error">{error}</div>}
+        <PrimaryButton type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </PrimaryButton>
+      </form>
+      <div className="login-links">
+        <a href="#">Forgot password?</a>
       </div>
-    </PageWrapper>
+      <div className="contact-note">
+        Need help? <a href="mailto:support@woocombine.com">Contact us</a>
+      </div>
+    </div>
   );
 };
 

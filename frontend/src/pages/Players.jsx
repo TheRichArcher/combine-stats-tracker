@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PageWrapper from '../layout/PageWrapper';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -34,43 +31,39 @@ const Players = () => {
     fetchPlayers();
   }, [user]);
 
-  if (authLoading || loading) return <PageWrapper><Header /><main className="players-main"><div className="empty-state">Loading...</div></main><Footer /></PageWrapper>;
-  if (error) return <PageWrapper><Header /><main className="players-main"><div className="empty-state">{error}</div></main><Footer /></PageWrapper>;
+  if (authLoading || loading) return <div className="empty-state">Loading...</div>;
+  if (error) return <div className="empty-state">{error}</div>;
 
   return (
-    <PageWrapper>
-      <Header />
-      <main className="players-main">
-        <h2>Registered Players</h2>
-        <div className="players-list">
-          {players.length === 0 ? (
-            <div className="empty-state">No players registered yet.</div>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Age Group</th>
-                  <th>Email</th>
-                  <th>Composite Score</th>
+    <>
+      <h2>Registered Players</h2>
+      <div className="players-list">
+        {players.length === 0 ? (
+          <div className="empty-state">No players registered yet.</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Age Group</th>
+                <th>Email</th>
+                <th>Composite Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map(player => (
+                <tr key={player.id}>
+                  <td>{player.name}</td>
+                  <td>{player.age_group}</td>
+                  <td>{player.email || '-'}</td>
+                  <td>{player.composite_score !== undefined ? player.composite_score : '-'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {players.map(player => (
-                  <tr key={player.id}>
-                    <td>{player.name}</td>
-                    <td>{player.age_group}</td>
-                    <td>{player.email || '-'}</td>
-                    <td>{player.composite_score !== undefined ? player.composite_score : '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </PageWrapper>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
   );
 };
 
