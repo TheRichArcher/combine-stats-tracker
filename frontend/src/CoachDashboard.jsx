@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import './App.css'; // Reuse existing styles if applicable
 import { saveAs } from 'file-saver'; // Import file-saver
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';

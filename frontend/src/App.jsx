@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Select from 'react-select'; // <-- Import react-select
-import './App.css'; // Basic styling
 import PrimaryButton from './PrimaryButton';
 import TextInput from './TextInput';
 import { AuthProvider } from './context/AuthContext';
@@ -61,41 +60,45 @@ function Spinner() {
 }
 
 const App = () => (
-  <Router>
-    <AuthProvider>
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth fallback={<Spinner />}>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/coaches"
-            element={
-              <RequireAuth fallback={<Spinner />}>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/players"
-            element={
-              <RequireAuth fallback={<Spinner />}>
-                <Players />
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Layout>
-    </AuthProvider>
-  </Router>
+  <>
+    <div className="text-red-500 text-center">Tailwind is working!</div>
+    {/* Remove this after confirmation */}
+    <Router>
+      <AuthProvider>
+        <Layout>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth fallback={<Spinner />}>
+                  <Dashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/coaches"
+              element={
+                <RequireAuth fallback={<Spinner />}>
+                  <Dashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/players"
+              element={
+                <RequireAuth fallback={<Spinner />}>
+                  <Players />
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Layout>
+      </AuthProvider>
+    </Router>
+  </>
 );
 
 export default App; 
