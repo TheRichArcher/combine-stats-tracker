@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Players from './pages/Players';
 import Layout from './layout/Layout';
+import SignUp from './SignUp';
 
 // --- Define Custom Error Class ---
 class HttpError extends Error {
@@ -65,6 +66,7 @@ const App = () => (
       <Layout>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route
             path="/dashboard"
             element={
