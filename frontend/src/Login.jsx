@@ -40,14 +40,12 @@ export default function Login({ user }) {
   };
 
   return (
-    <div className="login-outer-container">
-      <div className="login-card fade-in">
-        <div className="login-logo">
-          <img src="/combine-logo.png" alt="Woo-Combine Logo" className="logo" />
-        </div>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div>
-            <label htmlFor="email">Email</label>
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50">
+      <img src="/combine-logo.png" alt="WooCombine Logo" className="h-16 w-auto mb-6" />
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-gray-700 font-medium mb-1">Email</label>
             <input
               id="email"
               type="email"
@@ -55,11 +53,11 @@ export default function Login({ user }) {
               onChange={e => setEmail(e.target.value)}
               required
               autoComplete="username"
-              className="login-input"
+              className="w-full border border-gray-300 rounded px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label htmlFor="password">Password</label>
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-gray-700 font-medium mb-1">Password</label>
             <input
               id="password"
               type="password"
@@ -67,20 +65,22 @@ export default function Login({ user }) {
               onChange={e => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="login-input"
+              className="w-full border border-gray-300 rounded px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button type="submit" className="login-btn" disabled={loading}>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-60"
+            disabled={loading}
+          >
             {loading ? 'Logging in...' : 'Login'}
           </button>
-          <div className="login-links">
-            <a href="#" className="forgot-link">Forgot password?</a>
+          <div className="flex justify-between mt-3 text-sm">
+            <a href="#" className="text-blue-600 hover:underline">Forgot password?</a>
+            <Link to="/signup" className="text-blue-600 hover:underline">Sign up</Link>
           </div>
-          {error && <div className="login-error">{error}</div>}
+          {error && <div className="text-red-600 text-sm mt-3 text-center">{error}</div>}
         </form>
-        <div className="login-footer">
-          Don't have an account? <Link to="/signup">Sign up here</Link>
-        </div>
       </div>
     </div>
   );
